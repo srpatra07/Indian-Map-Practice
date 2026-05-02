@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Tamilnadu Mountains Guessing</title>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            font-family: "Poppins", sans-serif;
+            background: #f5f7fa;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #mapImage {
+            width: 70%;
+            height: 100%;
+            margin-left: 200px;
+        }
+
+        .point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #4c52bd;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            transition: 0.2s;
+        }
+
+        .scoreboard {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #fff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .18);
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .scoreboard button {
+            margin-left: 6px;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 8px;
+            background: #007bff;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px 26px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .18);
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        .modal-content button {
+            margin-top: 12px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: none;
+            background: #007bff;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .feedback {
+            margin-top: 8px;
+            font-weight: 700;
+        }
+
+        .feedback small {
+            display: block;
+            margin-top: 6px;
+            font-weight: 500;
+            color: #444;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="container">
+
+        <img id="mapImage" src="assets/tamilnadu_mtns.png">
+
+        <div class="point" style="top:198px; left:671px;" data-answer="Javadi Hills"
+            data-info="Tamilnadu"></div>
+
+        <div class="point" style="top:248px; left:701px;" data-answer="Gingee Hills"
+            data-info="Tamilnadu"></div>
+
+        <div class="point" style="top:269px; left:608px;" data-answer="Shevroy Hills"
+            data-info="Tamilnadu"></div>
+
+        <div class="point" style="top:325px; left:662px;" data-answer="Panchmalai Hills"
+            data-info="Tamilnadu"></div>
+
+        <div class="point" style="top:341px; left:563px;" data-answer="Palni Hills"
+            data-info="Tamilnadu"></div>
+
+        <div class="point" style="top:348px; left:598px;" data-answer="Sirumalai Hills"
+            data-info="Tamilnadu"></div>
+
+        <div class="point" style="top:378px; left:553px;" data-answer="Varushnad Hills"
+            data-info="Tamilnadu"></div>
+
+        <!-- Scoreboard -->
+        <div class="scoreboard">
+            Score: <span id="score">0</span> / <span id="total">0</span>
+            <button onclick="resetGame()">Reset</button>
+            <button onclick="showAll()">Show All</button>
+        </div>
+
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal" id="guessModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Guess the Location</h3>
+            <input id="answerInput" placeholder="Enter answer">
+            <button id="submitBtn" onclick="submitAnswer()">Submit</button>
+            <div id="feedback" class="feedback"></div>
+        </div>
+    </div>
+
+    <script>
+
+        let points = document.querySelectorAll(".point");
+        let currentPoint = null;
+        let score = 0;
+    
+        const modal = document.getElementById("guessModal");
+        const scoreEl = document.getElementById("score");
+        const totalEl = document.getElementById("total");
+        const feedback = document.getElementById("feedback");
+        const answerInput = document.getElementById("answerInput");
+        const modalTitle = document.getElementById("modalTitle");
+        const submitBtn = document.getElementById("submitBtn");
+    
+        totalEl.innerText = points.length;
+    
+        // ✅ IMPORTANT FIX: initialize dataset values properly
+        points.forEach(p => {
+            p.dataset.guessed = "false";
+            p.dataset.result = "";
+        });
+    
+        function updateScore() {
+            scoreEl.innerText = score;
+        }
+    
+        function attachPointClick(point) {
+            point.addEventListener("click", function () {
+    
+                // ✅ If already guessed → show info only
+                if (this.dataset.guessed === "true") {
+    
+                    let correctAnswer = this.dataset.answer;
+                    let extraInfo = this.dataset.info || "";
+                    let wasCorrect = this.dataset.result === "correct";
+    
+                    modalTitle.innerText = "Location Info";
+                    answerInput.style.display = "none";
+                    submitBtn.style.display = "none";
+    
+                    feedback.innerHTML =
+                        (wasCorrect ? "✅ Correct Answer" : "❌ Your Answer Was Wrong") +
+                        "<br><b>" + correctAnswer + "</b>" +
+                        "<br><small>" + extraInfo + "</small>";
+    
+                    feedback.style.color = wasCorrect ? "#00cc44" : "#ff3333";
+    
+                    modal.style.display = "flex";
+                    return;
+                }
+    
+                // 🟢 Normal Guess Mode
+                currentPoint = this;
+                feedback.innerHTML = "";
+                answerInput.value = "";
+                answerInput.style.display = "block";
+                submitBtn.style.display = "inline-block";
+                modalTitle.innerText = "Guess the Location";
+                modal.style.display = "flex";
+                answerInput.focus();
+            });
+        }
+    
+        points.forEach(p => attachPointClick(p));
+    
+        function submitAnswer() {
+            if (!currentPoint) return;
+    
+            let userAnswer = answerInput.value.trim();
+            let correctAnswer = currentPoint.dataset.answer;
+            let extraInfo = currentPoint.dataset.info || "";
+    
+            if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                currentPoint.style.background = "#00cc44";
+                feedback.innerHTML = "✅ Correct!<br><small>" + extraInfo + "</small>";
+                feedback.style.color = "#00cc44";
+                score++;
+                updateScore();
+                currentPoint.dataset.result = "correct";
+            } else {
+                currentPoint.style.background = "#ff3333";
+                feedback.innerHTML = "❌ Wrong — " + correctAnswer +
+                    "<br><small>" + extraInfo + "</small>";
+                feedback.style.color = "#ff3333";
+                currentPoint.dataset.result = "wrong";
+            }
+    
+            currentPoint.dataset.guessed = "true";
+            currentPoint.style.cursor = "not-allowed";
+    
+            setTimeout(() => {
+                modal.style.display = "none";
+                currentPoint = null;
+            }, 900);
+        }
+    
+        answerInput.addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+                submitAnswer();
+            }
+        });
+    
+        function resetGame() {
+            points.forEach(p => {
+                p.style.background = "#226abd";
+                p.dataset.guessed = "false";
+                p.dataset.result = "";
+                p.style.cursor = "pointer";
+            });
+            score = 0;
+            updateScore();
+        }
+    
+        function showAll() {
+            points.forEach(p => {
+                const label = document.createElement("div");
+                label.innerText = p.dataset.answer;
+                label.style.position = "absolute";
+                label.style.left = p.style.left;
+                label.style.top = p.style.top;
+                label.style.transform = "translate(-50%, -150%)";
+                label.style.fontWeight = "bold";
+                label.style.background = "white";
+                label.style.padding = "3px 6px";
+                label.style.borderRadius = "6px";
+                label.style.fontSize = "12px";
+    
+                document.getElementById("container").appendChild(label);
+    
+                setTimeout(() => label.remove(), 3000);
+            });
+        }
+    
+        window.addEventListener("click", function (e) {
+            if (e.target === modal) modal.style.display = "none";
+        });
+    
+    </script>
+    
+
+</body>
+
+</html>
