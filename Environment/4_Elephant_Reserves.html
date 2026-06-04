@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Elephant Reserves of India - Guessing Game</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            background: #f5f7fa;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #fff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .18);
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .scoreboard button {
+            margin-left: 8px;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 8px;
+            background: #2d5a27;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 14px;
+            padding: 25px;
+            width: 340px;
+            text-align: center;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .2);
+        }
+
+        .fact-box {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 5px solid #2d5a27;
+        }
+
+        .fact-box h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .fact-box p {
+            font-size: 14px;
+            margin: 5px 0;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        #submitGuess {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: #2d5a27;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .close-modal {
+            margin-top: 15px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 700;
+        }
+
+        .feedback {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        /* Legend */
+        .legend {
+            background: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .15);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .dot-legend {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+            border: 1px solid #999;
+        }
+
+        .place-label {
+            font-weight: 700;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            color: #2d5a27;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <div class="scoreboard">
+        Score : <span id="score">0</span> / <span id="total">0</span>
+        <button id="resetBtn">Reset</button>
+        <button id="showAllBtn">Show All</button>
+    </div>
+
+    <!-- Unified Modal -->
+    <div class="modal" id="gameModal">
+        <div class="modal-content">
+            <div id="guessView">
+                <h3>Guess the Elephant Reserve</h3>
+                <p style="font-size: 0.8em; color: #666;">(Tip: You can omit 'ER' in your answer)</p>
+                <input id="guessInput" placeholder="Name of Reserve or State" autocomplete="off" />
+                <button id="submitGuess">Submit</button>
+            </div>
+
+            <div id="resultView" style="display:none;">
+                <div id="feedback" class="feedback"></div>
+                <div class="fact-box">
+                    <h4 id="infoName"></h4>
+                    <p><strong>State:</strong> <span id="infoState"></span></p>
+                    <p><strong>Status:</strong> <span id="infoStatus"></span></p>
+                </div>
+                <button class="close-modal" id="closeBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        /**
+         * DATA ARRAY - Elephant Reserves
+         * Suffix "ER" added to all names.
+         * Starred reserves marked with isStarred: true.
+         */
+        const elephantReserves = [
+            // Meghalaya
+            { name: "Garo ER", state: "Meghalaya", coords: [25.50, 90.50], isStarred: true },
+            { name: "Khasi ER", state: "Meghalaya", coords: [25.45, 91.60], isStarred: false },
+
+            // Assam
+            { name: "Chirang Ripu ER", state: "Assam", coords: [26.75, 90.50], isStarred: true },
+            { name: "Kaziranga Karbi Anglong ER", state: "Assam", coords: [26.55, 93.30], isStarred: false },
+            { name: "Dhansiri Lungding ER", state: "Assam", coords: [25.95, 93.35], isStarred: false },
+            { name: "Sonitpur ER", state: "Assam", coords: [26.85, 92.75], isStarred: false },
+            { name: "Dihing Patkai ER", state: "Assam", coords: [27.32, 95.45], isStarred: true },
+
+            // Nagaland
+            { name: "Intanki ER", state: "Nagaland", coords: [25.55, 93.45], isStarred: false },
+            { name: "Singphan ER", state: "Nagaland", coords: [26.73, 94.90], isStarred: false },
+
+            // Arunachal Pradesh
+            { name: "Kameng ER", state: "Arunachal Pradesh", coords: [27.25, 92.65], isStarred: false },
+            { name: "South Arunachal ER", state: "Arunachal Pradesh", coords: [27.05, 96.20], isStarred: false },
+
+            // West Bengal
+            { name: "Eastern Dwar ER", state: "West Bengal", coords: [26.68, 89.45], isStarred: true },
+            { name: "Mayurjharna ER", state: "West Bengal", coords: [22.62, 86.85], isStarred: false },
+
+            // Chhattisgarh
+            { name: "Lemru ER", state: "Chhattisgarh", coords: [22.65, 82.75], isStarred: false },
+            { name: "Badalkhol-Tamor Pingla ER", state: "Chhattisgarh", coords: [23.55, 83.65], isStarred: false },
+
+            // Andhra Pradesh
+            { name: "Rayala ER", state: "Andhra Pradesh", coords: [13.25, 78.55], isStarred: false },
+
+            // Odisha
+            { name: "Mayurbhanj ER", state: "Odisha", coords: [21.90, 86.40], isStarred: false },
+            { name: "Sambalpur ER", state: "Odisha", coords: [21.45, 84.45], isStarred: false },
+            { name: "Baitarani ER", state: "Odisha", coords: [21.35, 85.50], isStarred: false },
+            { name: "South Odisha ER", state: "Odisha", coords: [19.15, 83.60], isStarred: false },
+            { name: "Mahanadi ER", state: "Odisha", coords: [20.55, 84.85], isStarred: false },
+
+            // Jharkhand
+            { name: "Singhbhum ER", state: "Jharkhand", coords: [22.70, 85.45], isStarred: false },
+
+            // Uttarakhand
+            { name: "Shivalik ER", state: "Uttarakhand", coords: [29.95, 78.20], isStarred: true },
+
+            // UP
+            { name: "Uttar Pradesh ER", state: "Uttar Pradesh", coords: [29.70, 77.85], isStarred: false },
+            { name: "Terai ER", state: "Uttar Pradesh", coords: [28.45, 80.55], isStarred: false },
+
+            // Tamil Nadu
+            { name: "Coimbatore ER", state: "Tamil Nadu", coords: [11.00, 76.75], isStarred: false },
+            { name: "Anamalai ER", state: "Tamil Nadu", coords: [10.50, 77.10], isStarred: false },
+            { name: "Srivilliputhur ER", state: "Tamil Nadu", coords: [9.55, 77.55], isStarred: false },
+            { name: "Agasthyamalai ER", state: "Tamil Nadu", coords: [8.55, 77.35], isStarred: false },
+            { name: "Nilgiri ER", state: "Tamil Nadu", coords: [11.55, 76.65], isStarred: true },
+
+            // Karnataka
+            { name: "Mysuru ER", state: "Karnataka", coords: [12.05, 76.35], isStarred: true },
+            { name: "Dandeli ER", state: "Karnataka", coords: [15.20, 74.65], isStarred: false },
+
+            // Kerala
+            { name: "Wayanad ER", state: "Kerala", coords: [11.75, 76.15], isStarred: true },
+            { name: "Nilambur ER", state: "Kerala", coords: [11.30, 76.25], isStarred: false },
+            { name: "Anamudi ER", state: "Kerala", coords: [10.15, 77.15], isStarred: false },
+            { name: "Periyar ER", state: "Kerala", coords: [9.50, 77.20], isStarred: false }
+        ];
+
+        // --- Configuration & Colors ---
+        const colors = {
+            standard: '#3498db',    // Blue
+            starred: '#f39c12',     // Orange/Gold for * items
+            correct: '#28a745',
+            wrong: '#dc3545'
+        };
+
+        const map = L.map('map', { minZoom: 4, maxZoom: 10 }).setView([22.5, 78.9], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+        let score = 0;
+        let markers = [];
+        let currentTarget = null;
+
+        const modal = document.getElementById('gameModal');
+        const guessView = document.getElementById('guessView');
+        const resultView = document.getElementById('resultView');
+        const feedback = document.getElementById('feedback');
+        const input = document.getElementById('guessInput');
+
+        function createIcon(color) {
+            return L.divIcon({
+                className: 'custom-point',
+                html: `<div style="background-color:${color}; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow:0 0 5px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+        }
+
+        function initGame() {
+            markers.forEach(m => map.removeLayer(m.marker));
+            markers = [];
+            score = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('total').textContent = elephantReserves.length;
+
+            elephantReserves.forEach(w => {
+                const initialColor = w.isStarred ? colors.starred : colors.standard;
+                const marker = L.marker(w.coords, {
+                    icon: createIcon(initialColor)
+                }).addTo(map);
+
+                const markerObj = { marker, data: w, guessed: false, result: null };
+
+                marker.on('click', () => {
+                    currentTarget = markerObj;
+                    if (!markerObj.guessed) {
+                        showGuessMode();
+                    } else {
+                        showInfoMode(markerObj);
+                    }
+                });
+
+                markers.push(markerObj);
+            });
+        }
+
+        function showGuessMode() {
+            guessView.style.display = 'block';
+            resultView.style.display = 'none';
+            input.value = '';
+            modal.style.display = 'flex';
+            input.focus();
+        }
+
+        function showInfoMode(mObj) {
+            guessView.style.display = 'none';
+            resultView.style.display = 'block';
+
+            if (mObj.result === 'correct') {
+                feedback.textContent = "✅ Correct!";
+                feedback.style.color = colors.correct;
+            } else if (mObj.result === 'wrong') {
+                feedback.textContent = `❌ ${mObj.data.name}`;
+                feedback.style.color = colors.wrong;
+            } else {
+                feedback.textContent = "Reserve Info";
+                feedback.style.color = "#333";
+            }
+
+            document.getElementById('infoName').textContent = mObj.data.name;
+            document.getElementById('infoState').textContent = mObj.data.state;
+            document.getElementById('infoStatus').textContent = mObj.data.isStarred ? "Special Project/Priority Reserve (*)" : "Elephant Reserve";
+
+            modal.style.display = 'flex';
+        }
+
+        document.getElementById('submitGuess').addEventListener('click', () => {
+            if (!currentTarget) return;
+
+            const rawGuess = input.value.trim().toLowerCase();
+            const reserveNameClean = currentTarget.data.name.toLowerCase().replace(" er", "");
+            const fullNameClean = currentTarget.data.name.toLowerCase();
+            const stateClean = currentTarget.data.state.toLowerCase();
+
+            const isCorrect = (rawGuess === reserveNameClean || rawGuess === fullNameClean || rawGuess === stateClean);
+
+            currentTarget.guessed = true;
+            currentTarget.result = isCorrect ? 'correct' : 'wrong';
+
+            if (isCorrect) {
+                score++;
+                document.getElementById('score').textContent = score;
+            }
+
+            currentTarget.marker.setIcon(createIcon(isCorrect ? colors.correct : colors.wrong));
+            showInfoMode(currentTarget);
+        });
+
+        input.addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('submitGuess').click(); });
+        document.getElementById('closeBtn').onclick = () => modal.style.display = 'none';
+        window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+
+        document.getElementById('resetBtn').onclick = initGame;
+        document.getElementById('showAllBtn').onclick = () => {
+            markers.forEach(m => {
+                const tip = L.tooltip({ permanent: true, direction: 'top', className: 'place-label' })
+                    .setContent(`<b>${m.data.name}</b>`)
+                    .setLatLng(m.data.coords)
+                    .addTo(map);
+                setTimeout(() => map.removeLayer(tip), 4000);
+            });
+        };
+
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'legend');
+            div.innerHTML = `
+                <b>Legend</b><br>
+                <span class="dot-legend" style="background:${colors.standard}"></span> Regular ER<br>
+                <span class="dot-legend" style="background:${colors.starred}"></span> MIKE Programme ER<br>
+                <span class="dot-legend" style="background:${colors.correct}"></span> Correct<br>
+                <span class="dot-legend" style="background:${colors.wrong}"></span> Wrong
+            `;
+            return div;
+        };
+        legend.addTo(map);
+
+        initGame();
+    </script>
+</body>
+</html>

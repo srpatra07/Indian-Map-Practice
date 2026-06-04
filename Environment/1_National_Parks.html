@@ -272,7 +272,7 @@
             { name: "Eaglenest", isNP: false, isTR: false, isWLS: true, coords: [27.05, 92.40], details: "<b>Includes:</b> Sessa orchid sanctuary.<br><b>River:</b> Kameng river.<br><b>Bird:</b> Bugun Liocichla (CR)." },
 
             // --- NAGALAND ---
-            { name: "Itanki", isNP: true, isTR: false, isWLS: false, coords: [25.54, 93.51], details: "<b>Fauna:</b> Hoolock Gibbon (EN) - Ape without tail." },
+            { name: "Intanki", isNP: true, isTR: false, isWLS: false, coords: [25.54, 93.51], details: "<b>Fauna:</b> Hoolock Gibbon (EN) - Ape without tail." },
 
             // --- MANIPUR ---
             { name: "Keibul Lamjao", isNP: true, isTR: false, isWLS: false, coords: [24.53, 93.85], details: "<b>Water:</b> Loktak lake.<br><b>Fauna:</b> Dancing deer (Sangoi) (EN).<br><b>Feature:</b> Only floating National Park (Phumdis)." },
@@ -298,7 +298,7 @@
             { name: "Orang", isNP: true, isTR: true, isWLS: false, coords: [26.54, 92.32], details: "<b>AKA:</b> Mini Kaziranga.<br><b>River:</b> Brahmaputra (North bank)." },
             { name: "Nameri", isNP: true, isTR: true, isWLS: false, coords: [26.93, 92.83], details: "<b>Link:</b> Near Pakhui WLS.<br><b>Bird:</b> Ibisbill (LC)." },
             { name: "Kaziranga", isNP: true, isTR: true, isWLS: false, coords: [26.58, 93.17], details: "<b>River:</b> Brahmaputra.<br><b>Fauna:</b> Wild Buffalo (EN), Indian Rhinoceros (VU), Gaur (VU)." },
-            { name: "Dibru Suikhowa", isNP: true, isTR: false, isWLS: false, coords: [27.67, 95.35], details: "<b>State:</b> Assam." },
+            { name: "Dibru Saikhowa", isNP: true, isTR: false, isWLS: false, coords: [27.67, 95.35], details: "<b>State:</b> Assam." },
             { name: "Dihing Patkai", isNP: true, isTR: false, isWLS: false, coords: [27.31, 95.43], details: "<b>Fauna:</b> White winged Duck (EN).<br><b>Feature:</b> Jeypore Rainforest." },
             { name: "Pobitora", isNP: false, isTR: false, isWLS: true, coords: [26.24, 92.05], details: "<b>Fauna:</b> One horned Rhino (VU).<br><b>AKA:</b> Mini Kaziranga." },
             { name: "Bura Chapori", isNP: false, isTR: false, isWLS: true, coords: [26.65, 92.74], details: "<b>Bird:</b> Bengal Florican (CR)." },
@@ -430,7 +430,17 @@
         ];
 
         // --- MAP INIT ---
-        const map = L.map('map', { zoomControl: false }).setView([22.9, 80.5], 5);
+        const map = L.map('map', {
+            zoomControl: false,
+            // Physics-based smoothness
+            inertia: true,
+            inertiaDeceleration: 3000,
+            inertiaMaxSpeed: 1500,
+            // Smooth zooming settings
+            zoomSnap: 0.4,    // Allows zooming to fractional levels (smoother)
+            zoomDelta: 1.2,   // Incremental zoom steps
+            wheelPxPerZoomLevel: 120 // Makes scroll-zoom feel less "jumpy"
+        }).setView([22.9, 80.5], 5);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
         fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/countries/india/india-states.json')
@@ -529,7 +539,11 @@
             locations.forEach(loc => {
                 loc.guessed = false; // Reset state
                 const marker = L.marker(loc.coords, { icon: createIcon(loc) }).addTo(map);
-                marker.on('click', () => openModal(loc, marker));
+                marker.on('click', (e) => {
+                    // Prevents the map from reacting to the click (no panning/zooming)
+                    L.DomEvent.stopPropagation(e);
+                    openModal(loc, marker);
+                });
                 markers.push({ marker, data: loc });
             });
         }

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>India Biosphere Reserves - Quiz Explorer</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --success: #1bd62e;
+            --danger: #e74c3c;
+            --starred: #00d2ff;
+            --bg-card: #5149af;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Outfit", sans-serif;
+            background: #f5f7fa;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+            background: #b3d1ff;
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .15);
+            font-weight: 600;
+            z-index: 1000;
+            border: 2px solid var(--primary);
+        }
+
+        .scoreboard span {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .scoreboard button {
+            margin-left: 10px;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+            transition: 0.3s;
+        }
+
+        .scoreboard button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .6);
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 24px;
+            padding: 35px;
+            width: 450px;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-content h3 {
+            font-size: 24px;
+            color: var(--primary);
+            margin-top: 0;
+        }
+
+        .guess-input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #ddd;
+            font-size: 18px;
+            font-weight: 600;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .guess-input:focus {
+            border-color: var(--starred);
+        }
+
+        /* Info Card Design */
+        .info-card {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 1px solid #eee;
+            overflow: hidden;
+            animation: fadeIn 0.5s;
+        }
+
+        .info-header {
+            background: var(--primary);
+            color: white;
+            padding: 10px 15px;
+            font-weight: 800;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .info-body {
+            padding: 20px;
+            font-size: 18px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .info-body b {
+            color: var(--primary);
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .feedback {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 15px 0;
+        }
+
+        #closeBtn {
+            width: 100%;
+            /* Fills the modal width */
+            box-sizing: border-box;
+            /* PREVENTS OVERFLOW by keeping padding inside */
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            /* Vertical size */
+            border-radius: 12px;
+            /* Matches modal corners */
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            display: none;
+            /* Handled by JS */
+        }
+
+        #closeBtn:hover {
+            background: #34495e;
+            /* Slightly lighter than primary */
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #closeBtn:active {
+            transform: translateY(0);
+        }
+
+        /* Legend */
+        .legend {
+            background: #fff;
+            padding: 12px 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid #000;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .place-label {
+            font-weight: 800;
+            font-size: 12px;
+            color: #000;
+            background: white;
+            border: 1.5px solid #000;
+            padding: 3px 6px;
+        }
+
+        .fa-dharmachakra {
+            font-size: 26px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <div class="scoreboard animate__animated animate__fadeInDown">
+        Score: <span id="score">0</span> / <span id="total">0</span>
+        <button id="resetBtn">Reset</button>
+        <button id="showAllBtn" style="background:#576574">Show All</button>
+    </div>
+
+    <div class="modal" id="guessModal">
+        <div class="modal-content animate__animated animate__zoomIn">
+            <h3 id="modalTitle">Guess the Biosphere</h3>
+            <input class="guess-input" id="guessInput" placeholder="Ex: Nilgiri BR" autocomplete="off" />
+            <div id="feedback" class="feedback"></div>
+
+            <div id="infoCard" class="info-card">
+                <div class="info-header"><i class="fa-solid fa-circle-info"></i> Quick Facts</div>
+                <div class="info-body" id="infoText"></div>
+            </div>
+
+            <button id="closeBtn" class="closeBtn">Next</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const locations = [
+            { name: "Cold Desert", coords: [32.33, 78.01], details: "<b>Components:</b> Pin Valley NP, Chandratal Wetland, Kibber WLS.<br><b>Points:</b> Sarchu tourist spot.<br><b>Region:</b> Himachal Pradesh." },
+            { name: "Nandadevi", coords: [30.41, 79.90], details: "<b>Components:</b> Nandadevi NP and Valley of Flowers NP.<br><b>Status:</b> UNESCO World Heritage Site.<br><b>State:</b> Uttarakhand." },
+            { name: "Rann of Kutch", isStar: true, coords: [23.85, 70.00], details: "<b>Status:</b> Largest Biosphere Reserve in India.<br><b>Fauna:</b> Indian Wild Ass (Khur).<br><b>Region:</b> Banni Grasslands, Gujarat." },
+            { name: "Kangchenjunga", coords: [27.60, 88.18], details: "<b>Status:</b> India's first Mixed World Heritage Site.<br><b>Fauna:</b> Asian Wild Dog (EN).<br><b>State:</b> Sikkim." },
+            { name: "Pachmarhi", coords: [22.46, 78.43], details: "<b>Includes:</b> Satpura NP, Bori Sanctuary, Pachmarhi Sanctuary.<br><b>River:</b> Tawa River.<br><b>State:</b> Madhya Pradesh." },
+            { name: "Panna", coords: [24.62, 79.94], details: "<b>Year:</b> 2011.<br><b>River:</b> Ken River.<br><b>Famous for:</b> Tiger population and Diamond mines." },
+            { name: "Dihang Dibang", isStar: true, coords: [28.60, 95.80], details: "<b>NP:</b> Mouling NP.<br><b>Fauna:</b> Mishmi Takin (EN), Red Goral (VU), Asian Black Bear." },
+            { name: "Dibru Saikhowa", isStar: true, coords: [27.65, 95.35], details: "<b>Status:</b> Smallest BR in India.<br><b>Fauna:</b> White-winged Wood Duck (EN).<br><b>State:</b> Assam." },
+            { name: "Manas", isStar: true, coords: [26.73, 91.01], details: "<b>Fauna:</b> Golden Langur (EN), Pygmy Hog (CR).<br><b>River:</b> Manas River.<br><b>State:</b> Assam." },
+            { name: "Nokrek", coords: [25.48, 90.41], details: "<b>Hills:</b> Garo Hills.<br><b>River:</b> Simsang River.<br><b>Fauna:</b> Red Panda (EN)." },
+            { name: "Achanakmar-Amarkantak", coords: [22.45, 81.75], details: "<b>Rivers:</b> Narmada, Son, and Johila rivers.<br><b>Landscape:</b> Maikal hill range." },
+            { name: "Similipal", coords: [21.93, 86.35], details: "<b>Fauna:</b> Melanistic (Black) Tigers.<br><b>Waterfalls:</b> Barehipani Falls.<br><b>Includes:</b> Hadgarh and Kuldiha WLS." },
+            { name: "Sundarban", coords: [21.94, 88.85], details: "<b>Flora:</b> Largest Mangrove Forest.<br><b>Fauna:</b> Royal Bengal Tiger.<br><b>State:</b> West Bengal." },
+            { name: "Seshachalam", isStar: true, coords: [13.75, 79.35], details: "<b>Hills:</b> Seshachalam hills in Andhra Pradesh.<br><b>Flora:</b> Red Sanders (Red Sandalwood)." },
+            { name: "Nilgiri", coords: [11.55, 76.50], details: "<b>Year:</b> 1986 (First BR of India).<br><b>Includes:</b> Mudumalai, Mukurthi, Nagarhole, Bandipur, Silent Valley.<br><b>WLS:</b> Wayanad, Sathyamangalam." },
+            { name: "Agasthyamalai", coords: [8.55, 77.30], details: "<b>Tribals:</b> Kanikkarans.<br><b>Includes:</b> KMTR, Neyyar, Peppara, Shendurney WLS.<br><b>State:</b> Kerala & TN." },
+            { name: "Gulf of Mannar", coords: [9.15, 78.89], details: "<b>Fauna:</b> Dugong (Sea Cow).<br><b>Landscape:</b> Adam's Bridge (Ramsetu).<br><b>Rivers:</b> Thamirabarani and Vaippar." },
+            { name: "Great Nicobar", coords: [6.95, 93.85], details: "<b>Includes:</b> Campbell Bay and Galathea NP.<br><b>Fauna:</b> Nicobar Megapode, Robber Crab." }
+        ];
+
+        // Map settings for smooth drag and zoom
+        const map = L.map('map', {
+            zoomControl: false,
+            zoomSnap: 0.8,
+            zoomDelta: 0.5,
+            wheelPxPerZoomLevel: 100
+        }).setView([22.9, 80.5], 5);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+        // Dark state borders
+        fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/countries/india/india-states.json')
+            .then(res => res.json())
+            .then(data => {
+                L.geoJSON(data, { style: { color: "#000", weight: 3.5, fillOpacity: 0.08 } }).addTo(map);
+            });
+
+        let score = 0;
+        let currentLoc = null;
+        let currentMarker = null;
+        const markers = [];
+
+        function getCorrectString(loc) { return loc.name + " BR"; }
+
+        function createIcon(loc, color = null) {
+            let iconColor = color || (loc.isStar ? "var(--starred)" : "#ad6716");
+            return L.divIcon({
+                className: 'custom-icon',
+                html: `<i class="fa-solid fa-dharmachakra" style="color:${iconColor};"></i>`,
+                iconSize: [30, 30], iconAnchor: [15, 15]
+            });
+        }
+
+        function openModal(loc, marker) {
+            currentLoc = loc; currentMarker = marker;
+            modal.style.display = 'flex';
+            if (loc.guessed) {
+                document.getElementById('modalTitle').innerText = getCorrectString(loc);
+                input.style.display = 'none';
+                feedback.textContent = loc.wasCorrect ? "✅ Correct" : "❌ Incorrect";
+                feedback.style.color = loc.wasCorrect ? "var(--success)" : "var(--danger)";
+                infoText.innerHTML = loc.details;
+                infoCard.style.display = 'block';
+                closeBtn.style.display = 'block';
+            } else {
+                document.getElementById('modalTitle').innerText = "Identify this Biosphere Reserve";
+                input.style.display = 'block'; input.value = ''; input.focus();
+                feedback.textContent = ''; infoCard.style.display = 'none'; closeBtn.style.display = 'none';
+            }
+        }
+
+        function submitGuess() {
+            if (!currentLoc || currentLoc.guessed) return;
+            const guess = input.value.trim().toLowerCase();
+            const correctAns = getCorrectString(currentLoc).toLowerCase();
+            const isCorrect = (guess === correctAns);
+
+            currentLoc.guessed = true;
+            currentLoc.wasCorrect = isCorrect;
+            input.style.display = 'none';
+            infoText.innerHTML = currentLoc.details;
+            infoCard.style.display = 'block';
+            closeBtn.style.display = 'block';
+
+            if (isCorrect) {
+                score++; document.getElementById('score').textContent = score;
+                feedback.textContent = "✅ Correct!"; feedback.style.color = "var(--success)";
+                currentMarker.setIcon(createIcon(currentLoc, "var(--success)"));
+            } else {
+                feedback.textContent = `❌ Wrong! It's ${getCorrectString(currentLoc)}`;
+                feedback.style.color = "var(--danger)";
+                currentMarker.setIcon(createIcon(currentLoc, "var(--danger)"));
+            }
+        }
+
+        function initGame() {
+            markers.forEach(m => map.removeLayer(m.marker));
+            markers.length = 0; score = 0;
+            document.getElementById('score').textContent = 0;
+            document.getElementById('total').textContent = locations.length;
+            locations.forEach(loc => {
+                loc.guessed = false;
+                const marker = L.marker(loc.coords, { icon: createIcon(loc) }).addTo(map);
+                marker.on('click', () => {
+                    setTimeout(() => openModal(loc, marker), 100);
+                });
+                markers.push({ marker, data: loc });
+            });
+        }
+
+        const modal = document.getElementById('guessModal');
+        const input = document.getElementById('guessInput');
+        const feedback = document.getElementById('feedback');
+        const infoCard = document.getElementById('infoCard');
+        const infoText = document.getElementById('infoText');
+        const closeBtn = document.getElementById('closeBtn');
+
+        input.addEventListener('keypress', e => { if (e.key === 'Enter') submitGuess(); });
+        closeBtn.addEventListener('click', () => modal.style.display = 'none');
+        document.getElementById('resetBtn').addEventListener('click', initGame);
+
+        document.getElementById('showAllBtn').addEventListener('click', () => {
+            markers.forEach(m => {
+                const tip = L.tooltip({ permanent: true, direction: 'top', className: 'place-label' })
+                    .setContent(getCorrectString(m.data)).setLatLng(m.data.coords).addTo(map);
+                setTimeout(() => map.removeLayer(tip), 5000);
+            });
+        });
+
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'legend');
+            div.innerHTML = `
+      <b>Legend</b><br>
+      <i class="fa-solid fa-dharmachakra" style="color:var(--success);"></i> Biosphere Reserve<br>
+      <i class="fa-solid fa-dharmachakra" style="color:var(--starred);"></i> Starred BR (*)
+    `;
+            return div;
+        };
+        legend.addTo(map);
+
+        initGame();
+    </script>
+
+</body>
+
+</html>

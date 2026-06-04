@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wetlands of India - Guessing Game</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            background: #f5f7fa;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #fff;
+            padding: 10px 18px;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .18);
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .scoreboard button {
+            margin-left: 8px;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 8px;
+            background: #007bff;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 14px;
+            padding: 25px;
+            width: 340px;
+            text-align: center;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, .2);
+        }
+
+        /* Fact Box (shown after guessing) */
+        .fact-box {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 5px solid #007bff;
+        }
+
+        .fact-box h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .fact-box p {
+            font-size: 14px;
+            margin: 5px 0;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        #submitGuess {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: #007bff;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .close-modal {
+            margin-top: 15px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 700;
+        }
+
+        .feedback {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        /* Legend */
+        .legend {
+            background: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .15);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .dot-legend {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+            border: 1px solid #999;
+        }
+
+        .place-label {
+            font-weight: 700;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <div class="scoreboard">
+        Score: <span id="score">0</span> / <span id="total">0</span>
+        <button id="resetBtn">Reset</button>
+        <button id="showAllBtn">Show All</button>
+    </div>
+
+    <!-- Unified Modal -->
+    <div class="modal" id="gameModal">
+        <div class="modal-content">
+
+            <!-- Guessing Screen -->
+            <div id="guessView">
+                <h3>Guess the Wetland</h3>
+                <input id="guessInput" placeholder="Enter name or state" autocomplete="off" />
+                <button id="submitGuess">Submit</button>
+            </div>
+
+            <!-- Info/Result Screen -->
+            <div id="resultView" style="display:none;">
+                <div id="feedback" class="feedback"></div>
+                <div class="fact-box">
+                    <h4 id="infoName"></h4>
+                    <p><strong>State:</strong> <span id="infoState"></span></p>
+                    <p><strong>Fact 1:</strong> <span id="fact1"></span></p>
+                    <p><strong>Fact 2:</strong> <span id="fact2"></span></p>
+                </div>
+                <button class="close-modal" id="closeBtn">Close</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        /** 
+         * DATA ARRAY - PASTE YOUR LIST HERE 
+         */
+
+
+        const wetlandsData = [
+            {
+                name: "Wular Lake",
+                state: "Jammu & Kashmir",
+                coords: [34.35, 74.62],
+                addedLater: false,
+                fact1: "Jhelum River",
+                fact2: "One of Asia's largest freshwater lakes"
+            },
+
+            {
+                name: "Shallabugh Wetland",
+                state: "Jammu & Kashmir",
+                coords: [34.13, 74.75],
+                addedLater: false,
+                fact1: "Jhelum floodplain",
+                fact2: "Winter migratory birds"
+            },
+
+            {
+                name: "Hokersar Wetland",
+                state: "Jammu & Kashmir",
+                coords: [34.08, 74.70],
+                addedLater: false,
+                fact1: "Jhelum River",
+                fact2: "Important bird habitat"
+            },
+
+            {
+                name: "Hygam Wetland",
+                state: "Jammu & Kashmir",
+                coords: [34.22, 74.55],
+                addedLater: false,
+                fact1: "Jhelum River",
+                fact2: "Waterfowl habitat"
+            },
+
+            {
+                name: "Surinsar-Mansar Lake",
+                state: "Jammu & Kashmir",
+                coords: [32.78, 75.15],
+                addedLater: false,
+                fact1: "Twin lakes",
+                fact2: "Sacred pilgrimage site"
+            },
+
+            {
+                name: "Tso Moriri Lake",
+                state: "Ladakh",
+                coords: [32.90, 78.30],
+                addedLater: false,
+                fact1: "Black-necked Crane",
+                fact2: "Bar-headed Goose"
+            },
+
+            {
+                name: "Tso Kar Wetland",
+                state: "Ladakh",
+                coords: [33.30, 78.00],
+                addedLater: false,
+                fact1: "Changthang region",
+                fact2: "Hypersaline lake"
+            },
+
+            {
+                name: "Chandratal Lake",
+                state: "Himachal Pradesh",
+                coords: [32.48, 77.61],
+                addedLater: false,
+                fact1: "Near Kunzum Pass",
+                fact2: "High altitude lake"
+            },
+
+            {
+                name: "Pong Dam Lake",
+                state: "Himachal Pradesh",
+                coords: [32.05, 76.05],
+                addedLater: false,
+                fact1: "Maharana Pratap Sagar",
+                fact2: "Beas River"
+            },
+
+            {
+                name: "Renuka Lake",
+                state: "Himachal Pradesh",
+                coords: [30.61, 77.46],
+                addedLater: false,
+                fact1: "Largest natural lake of HP",
+                fact2: "Associated with Parashurama"
+            },
+
+            {
+                name: "Harike Wetland",
+                state: "Punjab",
+                coords: [31.17, 75.12],
+                addedLater: false,
+                fact1: "Beas-Sutlej confluence",
+                fact2: "Migratory birds"
+            },
+
+            {
+                name: "Kanjli Wetland",
+                state: "Punjab",
+                coords: [31.38, 75.38],
+                addedLater: false,
+                fact1: "Kali Bein",
+                fact2: "Sikh heritage"
+            },
+
+            {
+                name: "Ropar Wetland",
+                state: "Punjab",
+                coords: [30.97, 76.53],
+                addedLater: false,
+                fact1: "Sutlej River",
+                fact2: "Shivalik foothills"
+            },
+
+            {
+                name: "Nangal WLS",
+                state: "Punjab",
+                coords: [31.38, 76.38],
+                addedLater: false,
+                fact1: "Bhakra system",
+                fact2: "Sutlej River"
+            },
+
+            {
+                name: "Keshopur-Miani Community Reserve",
+                state: "Punjab",
+                coords: [32.03, 75.40],
+                addedLater: false,
+                fact1: "Community reserve",
+                fact2: "Ravi-Bein system"
+            },
+
+            {
+                name: "Beas Conservation Reserve",
+                state: "Punjab",
+                coords: [31.20, 75.30],
+                addedLater: false,
+                fact1: "Gharial",
+                fact2: "Indus dolphin"
+            },
+
+            {
+                name: "Sultanpur NP",
+                state: "Haryana",
+                coords: [28.46, 76.89],
+                addedLater: false,
+                fact1: "Central Asian Flyway",
+                fact2: "Near Gurugram"
+            },
+
+            {
+                name: "Bhindawas WLS",
+                state: "Haryana",
+                coords: [28.55, 76.58],
+                addedLater: false,
+                fact1: "Largest wetland in Haryana",
+                fact2: "Migratory birds"
+            },
+
+            {
+                name: "Asan Conservation Reserve",
+                state: "Uttarakhand",
+                coords: [30.43, 77.67],
+                addedLater: false,
+                fact1: "Yamuna tributary",
+                fact2: "Bird habitat"
+            },
+
+            {
+                name: "Nalsarovar BS",
+                state: "Gujarat",
+                coords: [22.80, 72.05],
+                addedLater: false,
+                fact1: "Largest wetland in Gujarat",
+                fact2: "Migratory birds"
+            },
+
+            {
+                name: "Thol Lake",
+                state: "Gujarat",
+                coords: [23.13, 72.38],
+                addedLater: false,
+                fact1: "Man-made lake",
+                fact2: "Near Ahmedabad"
+            },
+
+            {
+                name: "Wadhvana Wetland",
+                state: "Gujarat",
+                coords: [22.30, 73.73],
+                addedLater: false,
+                fact1: "Orsang River",
+                fact2: "Waterbirds"
+            },
+
+            {
+                name: "Khijadia WLS",
+                state: "Gujarat",
+                coords: [22.52, 70.07],
+                addedLater: false,
+                fact1: "Marine + freshwater",
+                fact2: "Jamnagar"
+            },
+
+            {
+                name: "Chhari Dhand",
+                state: "Gujarat",
+                coords: [23.70, 68.60],
+                addedLater: true,
+                fact1: "Kutch wetland : January 31, 2026 (98th entry)",
+                fact2: "Flamingos"
+            },
+
+            {
+                name: "Keoladeo NP",
+                state: "Rajasthan",
+                coords: [27.16, 77.52],
+                addedLater: false,
+                fact1: "Bharatpur",
+                fact2: "Siberian crane history"
+            },
+
+            {
+                name: "Sambhar Lake",
+                state: "Rajasthan",
+                coords: [26.90, 75.20],
+                addedLater: false,
+                fact1: "Largest inland salt lake",
+                fact2: "Flamingos"
+            },
+
+            {
+                name: "Menar Wetland",
+                state: "Rajasthan",
+                coords: [24.60, 73.80],
+                addedLater: true,
+                fact1: "Bird village : June 4, 2025",
+                fact2: "Flamingos"
+            },
+
+            {
+                "name": "Khichan Wetland",
+                "state": "Rajasthan",
+                "coords": [27.13, 72.30],
+                "addedLater": true,
+                "fact1": "Demoiselle Cranes : June 4, 2025",
+                "fact2": "India's first community-led bird sanctuary in the Jodhpur district"
+            },
+
+            {
+                "name": "Siliserh Lake",
+                "state": "Rajasthan",
+                "coords": [27.53, 76.53],
+                "addedLater": true,
+                "fact1": "Artificial lake : added in December, 2025",
+                "fact2": "Habitat for crocodiles and migratory waterbirds."
+            },
+
+            {
+                "name": "Kopra Jalashay",
+                "state": "Chhattisgarh",
+                "coords": [21.99, 82.16],
+                "addedLater": true,
+                "fact1": "First Ramsar site in Bilaspur, Chhattisgarh : added in December, 2025",
+                "fact2": "Migratory species, especially the Bar-headed Goose."
+            },
+
+            {
+                name: "Bhoj Wetland",
+                state: "Madhya Pradesh",
+                coords: [23.24, 77.35],
+                addedLater: false,
+                fact1: "Bhopal",
+                fact2: "White stork"
+            },
+
+            {
+                name: "Sakhya Sagar",
+                state: "Madhya Pradesh",
+                coords: [25.43, 77.66],
+                addedLater: false,
+                fact1: "Madhav NP",
+                fact2: "Shivpuri"
+            },
+
+            {
+                name: "Sirpur Lake",
+                state: "Madhya Pradesh",
+                coords: [22.72, 75.88],
+                addedLater: false,
+                fact1: "Indore",
+                fact2: "Bird habitat"
+            },
+
+            {
+                name: "Yashwant Sagar",
+                state: "Madhya Pradesh",
+                coords: [22.68, 75.70],
+                addedLater: false,
+                fact1: "Gambhir River",
+                fact2: "Indore water source"
+            },
+
+            {
+                name: "Tawa Reservoir",
+                state: "Madhya Pradesh",
+                coords: [22.55, 78.25],
+                addedLater: false,
+                fact1: "Narmada tributary",
+                fact2: "Satpura region"
+            },
+
+            {
+                name: "Nandur Madhameshwar",
+                state: "Maharashtra",
+                coords: [20.01, 74.11],
+                addedLater: false,
+                fact1: "Deolalli Minnow",
+                fact2: "Godavari basin"
+            },
+
+            {
+                name: "Lonar Lake",
+                state: "Maharashtra",
+                coords: [19.98, 76.51],
+                addedLater: false,
+                fact1: "Meteor impact crater",
+                fact2: "Pink coloration"
+            },
+
+            {
+                name: "Thane Creek",
+                state: "Maharashtra",
+                coords: [19.05, 72.98],
+                addedLater: false,
+                fact1: "Ulhas River",
+                fact2: "Flamingos"
+            },
+
+            {
+                name: "Nanda Lake",
+                state: "Goa",
+                coords: [15.16, 74.02],
+                addedLater: false,
+                fact1: "Zuari basin",
+                fact2: "Freshwater wetland"
+            },
+
+            {
+                name: "Ranganathittu BS",
+                state: "Karnataka",
+                coords: [12.42, 76.66],
+                addedLater: false,
+                fact1: "Kaveri River",
+                fact2: "Bird nesting"
+            },
+
+            {
+                name: "Aghanashini Estuary",
+                state: "Karnataka",
+                coords: [14.39, 74.30],
+                addedLater: false,
+                fact1: "Kagga rice",
+                fact2: "Gokarna"
+            },
+
+            {
+                name: "Ankasamudra BS",
+                state: "Karnataka",
+                coords: [15.18, 76.47],
+                addedLater: false,
+                fact1: "Tungabhadra basin",
+                fact2: "Near Hampi"
+            },
+
+            {
+                name: "Magadi Kere BS",
+                state: "Karnataka",
+                coords: [14.78, 76.38],
+                addedLater: false,
+                fact1: "Artificial lake",
+                fact2: "Migratory birds"
+            },
+
+            {
+                name: "Vembanad Wetland",
+                state: "Kerala",
+                coords: [9.60, 76.40],
+                addedLater: false,
+                fact1: "National Waterway 3",
+                fact2: "Nehru Trophy Boat Race"
+            },
+
+            {
+                name: "Ashtamudi Lake",
+                state: "Kerala",
+                coords: [8.95, 76.60],
+                addedLater: false,
+                fact1: "Kallada River",
+                fact2: "Munroe Island"
+            },
+
+            {
+                name: "Sasthamkotta Lake",
+                state: "Kerala",
+                coords: [9.03, 76.62],
+                addedLater: false,
+                fact1: "Largest freshwater lake",
+                fact2: "Drinking water source"
+            },
+
+            {
+                name: "Kolleru Lake",
+                state: "Andhra Pradesh",
+                coords: [16.63, 81.25],
+                addedLater: false,
+                fact1: "Between Krishna and Godavari",
+                fact2: "Bird habitat"
+            },
+
+            {
+                name: "Deepor Beel",
+                state: "Assam",
+                coords: [26.10, 91.65],
+                addedLater: false,
+                fact1: "Brahmaputra basin",
+                fact2: "Near Guwahati"
+            },
+
+            {
+                name: "Loktak Lake",
+                state: "Manipur",
+                coords: [24.50, 93.80],
+                addedLater: false,
+                fact1: "Floating phumdis",
+                fact2: "Sangai deer"
+            },
+
+            {
+                name: "Rudrasagar Lake",
+                state: "Tripura",
+                coords: [23.53, 91.38],
+                addedLater: false,
+                fact1: "Neermahal",
+                fact2: "Roofed turtle"
+            },
+
+            {
+                name: "Pala Wetland",
+                state: "Mizoram",
+                coords: [22.48, 92.88],
+                addedLater: false,
+                fact1: "Largest natural lake of Mizoram",
+                fact2: "Evergreen forest landscape"
+            },
+
+            {
+                name: "Khecheopalri Wetland",
+                state: "Sikkim",
+                coords: [27.37, 88.20],
+                addedLater: false,
+                fact1: "Sacred Buddhist lake",
+                fact2: "Ramam Valley"
+            },
+
+            {
+                name: "Kawar Jheel",
+                state: "Bihar",
+                coords: [25.63, 86.15],
+                addedLater: false,
+                fact1: "Burhi Gandak basin",
+                fact2: "Baer's Pochard (CR)"
+            },
+
+            {
+                name: "Nagi BS",
+                state: "Bihar",
+                coords: [24.83, 85.53],
+                addedLater: false,
+                fact1: "Jamui district",
+                fact2: "Migratory waterfowl"
+            },
+
+            {
+                name: "Nakti BS",
+                state: "Bihar",
+                coords: [24.85, 85.55],
+                addedLater: false,
+                fact1: "Jamui district",
+                fact2: "Bird breeding habitat"
+            },
+
+            {
+                "name": "Gokul Jalashay",
+                "state": "Bihar",
+                "coords": [25.56, 83.98],
+                "addedLater": true,
+                "fact1": "Ganges river floodplain : Added in September, 2025",
+                "fact2": "Migratory waterfowl."
+            },
+
+            {
+                "name": "Udaipur Jheel",
+                "state": "Bihar",
+                "coords": [26.78, 84.44],
+                "addedLater": true,
+                "fact1": "Oxbow lake : Added in September, 2025",
+                "fact2": "Udaipur Wildlife Sanctuary in West Champaran."
+            },
+
+            {
+                name: "Gogabeel Lake",
+                state: "Bihar",
+                coords: [25.87, 87.82],
+                addedLater: true,
+                fact1: "Oxbow lake : Added in November, 2025",
+                fact2: "Central Asian Flyway"
+            },
+
+            {
+                name: "Udhwa Lake BS",
+                state: "Jharkhand",
+                coords: [25.10, 87.83],
+                addedLater: false,
+                fact1: "Rajmahal Hills",
+                fact2: "Pataura & Barhale lakes"
+            },
+
+            {
+                name: "Hirakud Reservoir",
+                state: "Odisha",
+                coords: [21.53, 83.87],
+                addedLater: false,
+                fact1: "Mahanadi River",
+                fact2: "Longest earthen dam"
+            },
+
+            {
+                name: "Satkosia Gorge",
+                state: "Odisha",
+                coords: [20.52, 84.82],
+                addedLater: false,
+                fact1: "Mahanadi Gorge",
+                fact2: "Baisipalli WLS"
+            },
+
+            {
+                name: "Bhitarkanika Mangroves",
+                state: "Odisha",
+                coords: [20.73, 86.90],
+                addedLater: false,
+                fact1: "Saltwater crocodile",
+                fact2: "Brahmani-Baitarani delta"
+            },
+
+            {
+                name: "Ansupa Lake",
+                state: "Odisha",
+                coords: [20.47, 85.61],
+                addedLater: false,
+                fact1: "Oxbow lake",
+                fact2: "Mahanadi River"
+            },
+
+            {
+                name: "Chilika Lake",
+                state: "Odisha",
+                coords: [19.72, 85.35],
+                addedLater: false,
+                fact1: "Irrawaddy Dolphin",
+                fact2: "Nalabana Bird Sanctuary"
+            },
+
+            {
+                name: "Tampara Lake",
+                state: "Odisha",
+                coords: [19.27, 84.92],
+                addedLater: false,
+                fact1: "Brackish lagoon",
+                fact2: "Near Gopalpur"
+            },
+
+            {
+                name: "Sarsai Nawar Jheel",
+                state: "Uttar Pradesh",
+                coords: [26.83, 79.02],
+                addedLater: false,
+                fact1: "Sarus Crane",
+                fact2: "Natural marsh"
+            },
+
+            {
+                name: "Sandi BS",
+                state: "Uttar Pradesh",
+                coords: [27.30, 80.52],
+                addedLater: false,
+                fact1: "Garra River floodplain",
+                fact2: "Migratory ducks"
+            },
+
+            {
+                name: "Saman BS",
+                state: "Uttar Pradesh",
+                coords: [27.42, 79.28],
+                addedLater: false,
+                fact1: "Oxbow lake",
+                fact2: "Greylag Goose"
+            },
+
+            {
+                name: "Samaspur BS",
+                state: "Uttar Pradesh",
+                coords: [26.36, 81.28],
+                addedLater: false,
+                fact1: "Sai River basin",
+                fact2: "Migratory birds"
+            },
+
+            {
+                name: "Parvati Arga Wetland",
+                state: "Uttar Pradesh",
+                coords: [27.58, 81.12],
+                addedLater: false,
+                fact1: "Ghagra River",
+                fact2: "Oxbow wetland"
+            },
+
+            {
+                name: "Nawabganj BS",
+                state: "Uttar Pradesh",
+                coords: [26.62, 80.73],
+                addedLater: false,
+                fact1: "Shaheed Chandra Shekhar Azad BS",
+                fact2: "Near Lucknow-Kanpur route"
+            },
+
+            {
+                name: "Haiderpur Wetland",
+                state: "Uttar Pradesh",
+                coords: [29.35, 77.85],
+                addedLater: false,
+                fact1: "Hastinapur WLS",
+                fact2: "Ganga basin"
+            },
+
+            {
+                name: "Sur Sarovar",
+                state: "Uttar Pradesh",
+                coords: [27.23, 77.93],
+                addedLater: false,
+                fact1: "Keetham Lake",
+                fact2: "Yamuna floodplain"
+            },
+
+            {
+                name: "Bakhira WLS",
+                state: "Uttar Pradesh",
+                coords: [26.91, 83.12],
+                addedLater: false,
+                fact1: "Largest floodplain wetland of East UP",
+                fact2: "Rapti basin"
+            },
+
+            {
+                name: "Upper Ganga River",
+                state: "Uttar Pradesh",
+                coords: [28.30, 78.05],
+                addedLater: false,
+                fact1: "Ganges Dolphin",
+                fact2: "Gharial habitat"
+            },
+
+            {
+                name: "Patna BS",
+                state: "Uttar Pradesh",
+                coords: [27.52, 79.02],
+                addedLater: true,
+                fact1: "Etah district Jan 30, 2026 (97th entry)",
+                fact2: "Sarus Crane habitat"
+            },
+
+            {
+                name: "Shekha Jheel BS",
+                state: "Uttar Pradesh",
+                coords: [27.90, 78.05],
+                addedLater: true,
+                fact1: "Aligarh district in April 22, 2026 (99th entry)",
+                fact2: "Freshwater marsh ecosystem"
+            },
+
+            {
+                name: "East Kolkata Wetlands",
+                state: "West Bengal",
+                coords: [22.52, 88.45],
+                addedLater: false,
+                fact1: "Wastewater-fed fishery",
+                fact2: "Ramsar wise-use model"
+            },
+
+            {
+                name: "Sundarban Wetland",
+                state: "West Bengal",
+                coords: [21.95, 88.75],
+                addedLater: false,
+                fact1: "Largest mangrove forest",
+                fact2: "Royal Bengal Tiger"
+            },
+
+            {
+                name: "Kanjirankulam BS",
+                state: "Tamil Nadu",
+                coords: [9.38, 78.47],
+                addedLater: false,
+                fact1: "Spot-billed Pelican",
+                fact2: "Ramanathapuram"
+            },
+
+            {
+                name: "Kunthankulam BS",
+                state: "Tamil Nadu",
+                coords: [8.48, 77.78],
+                addedLater: false,
+                fact1: "Largest bird sanctuary in TN",
+                fact2: "Painted Stork colony"
+            },
+
+            {
+                name: "Udhayamarthandapuram BS",
+                state: "Tamil Nadu",
+                coords: [10.45, 79.42],
+                addedLater: false,
+                fact1: "Cauvery delta",
+                fact2: "Migratory birds"
+            },
+
+            {
+                name: "Vembannur Wetland",
+                state: "Tamil Nadu",
+                coords: [8.18, 77.33],
+                addedLater: false,
+                fact1: "Near Kanyakumari",
+                fact2: "Southernmost TN Ramsar site"
+            },
+
+            {
+                name: "Vaduvur BS",
+                state: "Tamil Nadu",
+                coords: [10.74, 79.24],
+                addedLater: false,
+                fact1: "Irrigation tank wetland",
+                fact2: "Migratory ducks"
+            },
+
+            {
+                name: "Suchindram-Theroor Wetland Complex",
+                state: "Tamil Nadu",
+                coords: [8.17, 77.45],
+                addedLater: false,
+                fact1: "Ancient irrigation tanks",
+                fact2: "Near Kanyakumari"
+            },
+
+            {
+                name: "Gulf of Mannar BR",
+                state: "Tamil Nadu",
+                coords: [8.95, 78.25],
+                addedLater: false,
+                fact1: "Dugong habitat",
+                fact2: "Marine biodiversity hotspot"
+            },
+
+            {
+                name: "Chitrangudi BS",
+                state: "Tamil Nadu",
+                coords: [9.37, 78.44],
+                addedLater: false,
+                fact1: "Pelican nesting colony",
+                fact2: "Ramanathapuram"
+            },
+
+            {
+                name: "Point Calimere WLS",
+                state: "Tamil Nadu",
+                coords: [10.30, 79.85],
+                addedLater: false,
+                fact1: "Blackbuck habitat",
+                fact2: "Cauvery delta tip"
+            },
+
+            {
+                name: "Pallikaranai Marsh",
+                state: "Tamil Nadu",
+                coords: [12.95, 80.20],
+                addedLater: false,
+                fact1: "Urban wetland of Chennai",
+                fact2: "Flood buffer"
+            },
+
+            {
+                name: "Karikili BS",
+                state: "Tamil Nadu",
+                coords: [12.53, 79.88],
+                addedLater: false,
+                fact1: "Vedanthangal complex",
+                fact2: "Openbill storks"
+            },
+
+            {
+                name: "Vedanthangal BS",
+                state: "Tamil Nadu",
+                coords: [12.54, 79.86],
+                addedLater: false,
+                fact1: "One of India's oldest bird sanctuaries",
+                fact2: "Breeding waterbirds"
+            },
+
+            {
+                name: "Pichavaram Mangroves",
+                state: "Tamil Nadu",
+                coords: [11.43, 79.79],
+                addedLater: false,
+                fact1: "Vellar-Coleroon estuary",
+                fact2: "Mangrove ecosystem"
+            },
+
+            {
+                name: "Vellode BS",
+                state: "Tamil Nadu",
+                coords: [11.27, 77.63],
+                addedLater: false,
+                fact1: "Erode district",
+                fact2: "Perumpallam canal"
+            },
+
+            {
+                name: "Karaivetti BS",
+                state: "Tamil Nadu",
+                coords: [11.15, 79.08],
+                addedLater: false,
+                fact1: "Kollidam River",
+                fact2: "Pullambadi canal"
+            },
+
+            {
+                name: "Longwood Shola",
+                state: "Tamil Nadu",
+                coords: [11.41, 76.72],
+                addedLater: false,
+                fact1: "Nilgiri hills",
+                fact2: "Nilgiri marten"
+            },
+
+            {
+                name: "Nanjarayan BS",
+                state: "Tamil Nadu",
+                coords: [11.09, 77.34],
+                addedLater: false,
+                fact1: "Nallar River",
+                fact2: "Indian Cormorant"
+            },
+
+            {
+                name: "Kazhuveli Wetland",
+                state: "Tamil Nadu",
+                coords: [12.12, 79.90],
+                addedLater: false,
+                fact1: "Large brackish wetland",
+                fact2: "East Coast Flyway"
+            },
+
+            {
+                name: "Theerthangal BS",
+                state: "Tamil Nadu",
+                coords: [9.48, 77.75],
+                addedLater: false,
+                fact1: "Irrigation tank wetland",
+                fact2: "Waterbird habitat"
+            },
+
+            {
+                name: "Sakkarakottai BS",
+                state: "Tamil Nadu",
+                coords: [9.37, 78.85],
+                addedLater: false,
+                fact1: "Ramanathapuram district",
+                fact2: "Migratory waders"
+            }
+
+        ];
+
+        console.log(wetlandsData.length);
+
+
+        // --- Configuration & Colors ---
+        const colors = {
+            blue: '#007bff',      // addedLater: false
+            purple: '#9b59b6',    // addedLater: true
+            correct: '#28a745',
+            wrong: '#dc3545'
+        };
+
+        const map = L.map('map', { minZoom: 3, maxZoom: 10 }).setView([22.5, 78.9], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+        fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/countries/india/india-states.json')
+            .then(res => res.json())
+            .then(data => {
+                L.geoJSON(data, { style: { color: "#000000", weight: 3.5, fillOpacity: 0.08 } }).addTo(map);
+            });
+        // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        //     attribution: '© OpenStreetMap contributors'
+        // }).addTo(map);
+
+        let score = 0;
+        let markers = [];
+        let currentTarget = null;
+
+        const modal = document.getElementById('gameModal');
+        const guessView = document.getElementById('guessView');
+        const resultView = document.getElementById('resultView');
+        const feedback = document.getElementById('feedback');
+        const input = document.getElementById('guessInput');
+
+        // --- Helper: Create a Circular Point ---
+        function createIcon(color) {
+            return L.divIcon({
+                className: 'custom-point',
+                html: `<div style="background-color:${color}; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 0 5px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]
+            });
+        }
+
+        // --- Initialize Game ---
+        function initGame() {
+            markers.forEach(m => map.removeLayer(m.marker));
+            markers = [];
+            score = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('total').textContent = wetlandsData.length;
+
+            wetlandsData.forEach(w => {
+                const initialColor = w.addedLater ? colors.purple : colors.blue;
+                const marker = L.marker(w.coords, {
+                    icon: createIcon(initialColor)
+                }).addTo(map);
+
+                const markerObj = { marker, data: w, guessed: false, result: null };
+
+                marker.on('click', () => {
+                    currentTarget = markerObj;
+                    if (!markerObj.guessed) {
+                        showGuessMode();
+                    } else {
+                        showInfoMode(markerObj);
+                    }
+                });
+
+                markers.push(markerObj);
+            });
+        }
+
+        function showGuessMode() {
+            guessView.style.display = 'block';
+            resultView.style.display = 'none';
+            input.value = '';
+            modal.style.display = 'flex';
+            input.focus();
+        }
+
+        function showInfoMode(mObj) {
+            guessView.style.display = 'none';
+            resultView.style.display = 'block';
+
+            // Set feedback text based on previous guess
+            if (mObj.result === 'correct') {
+                feedback.textContent = "✅ Correct!";
+                feedback.style.color = colors.correct;
+            } else if (mObj.result === 'wrong') {
+                feedback.textContent = `❌ ${mObj.data.name}`;
+                feedback.style.color = colors.wrong;
+            } else {
+                feedback.textContent = "Information";
+                feedback.style.color = "#333";
+            }
+
+            document.getElementById('infoName').textContent = mObj.data.name;
+            document.getElementById('infoState').textContent = mObj.data.state;
+            document.getElementById('fact1').textContent = mObj.data.fact1;
+            document.getElementById('fact2').textContent = mObj.data.fact2;
+
+            modal.style.display = 'flex';
+        }
+
+        document.getElementById('submitGuess').addEventListener('click', () => {
+            if (!currentTarget) return;
+
+            const guess = input.value.trim().toLowerCase();
+            const isCorrect =
+                guess === currentTarget.data.name.toLowerCase() ||
+                guess === currentTarget.data.state.toLowerCase();
+
+            currentTarget.guessed = true;
+            currentTarget.result = isCorrect ? 'correct' : 'wrong';
+
+            if (isCorrect) {
+                score++;
+                document.getElementById('score').textContent = score;
+            }
+
+            // Update marker point color permanently
+            currentTarget.marker.setIcon(createIcon(isCorrect ? colors.correct : colors.wrong));
+
+            // Show the facts immediately after guessing
+            showInfoMode(currentTarget);
+        });
+
+        // Handle Enter Key
+        input.addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('submitGuess').click(); });
+
+        // Close buttons
+        document.getElementById('closeBtn').onclick = () => modal.style.display = 'none';
+        window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+
+        // Reset & Show All
+        document.getElementById('resetBtn').onclick = initGame;
+        document.getElementById('showAllBtn').onclick = () => {
+            markers.forEach(m => {
+                const tip = L.tooltip({ permanent: true, direction: 'top', className: 'place-label' })
+                    .setContent(`<b>${m.data.name}</b>`)
+                    .setLatLng(m.data.coords)
+                    .addTo(map);
+                setTimeout(() => map.removeLayer(tip), 3000);
+            });
+        };
+
+        // --- Legend (Using Points) ---
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'legend');
+            div.innerHTML = `
+      <b>Legend</b><br>
+      <span class="dot-legend" style="background:${colors.blue}"></span> Standard<br>
+      <span class="dot-legend" style="background:${colors.purple}"></span> Added Later<br>
+      <span class="dot-legend" style="background:${colors.correct}"></span> Correct<br>
+      <span class="dot-legend" style="background:${colors.wrong}"></span> Wrong
+    `;
+            return div;
+        };
+        legend.addTo(map);
+
+        initGame();
+
+    </script>
+
+</body>
+
+</html>
