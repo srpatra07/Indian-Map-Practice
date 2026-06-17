@@ -1,0 +1,215 @@
+const locations = [
+    // --- EXISTING DATA ---
+    { name: "Dachigam", isNP: true, isTR: false, isWLS: false, coords: [34.13, 75.03], details: "<b>Range:</b> Zabarwan Range.<br><b>Water:</b> Mansar / Dal lake.<br><b>Fauna:</b> Kashmir Stag (CR), Snow Leopard (VU), Himalayan Monal (LC)." },
+    { name: "Kazinag", isNP: true, isTR: false, isWLS: false, coords: [34.25, 74.05], details: "<b>Fauna:</b> Markhor or Skew horn goat (NT).<br><b>River:</b> Jhelum river." },
+    { name: "Kishtwar", isNP: true, isTR: false, isWLS: false, coords: [33.60, 76.10], details: "<b>River:</b> Maru sudar river (Chenab river)." },
+    { name: "Salim Ali", isNP: true, isTR: false, isWLS: false, coords: [34.10, 74.80], details: "<b>Fauna:</b> Himalayan Serow (VU), Himalayan Snowcock (LC)." },
+    { name: "Hemis", isNP: true, isTR: false, isWLS: false, coords: [33.80, 77.50], details: "<b>Region:</b> Ladakh High Altitude.<br><b>Fauna:</b> Snow leopard (VU).<br><b>River:</b> Indus river." },
+    { name: "Changthang", isNP: false, isTR: false, isWLS: true, coords: [33.20, 78.60], details: "<b>Location:</b> Hanle Valley Dark Sky Reserve.<br><b>Fauna:</b> Pallas' cat (LC).<br><b>Pass:</b> Umling La." },
+    { name: "Great Himalayan", isNP: true, isTR: false, isWLS: false, coords: [31.75, 77.45], details: "<b>River:</b> Tirthan river.<br><b>Fauna:</b> Himalayan brown bear (CR), Siberian ibex (LC), Himalayan Tahr (NT)." },
+    { name: "Pin Valley", isNP: true, isTR: false, isWLS: false, coords: [32.05, 78.00], details: "<b>Status:</b> Cold desert biosphere reserve.<br><b>Region:</b> Lahauli spiti region." },
+    { name: "Simbalbara", isNP: true, isTR: false, isWLS: false, coords: [30.45, 77.65], details: "<b>Location:</b> Paonta valley.<br><b>Forest:</b> Sal forests." },
+    { name: "Rajaji", isNP: true, isTR: true, isWLS: false, coords: [30.10, 78.20], details: "<b>Includes:</b> Chilla and Motichur WLS.<br><b>Fauna:</b> Asian elephant, Bengal Tiger." },
+    { name: "Jim Corbett", isNP: true, isTR: true, isWLS: false, coords: [29.53, 78.77], details: "<b>History:</b> Oldest NP (1936).<br><b>River:</b> Ramganga River.<br><b>Fauna:</b> Bengal Tiger (EN)." },
+    { name: "Valley of Flowers", isNP: true, isTR: false, isWLS: false, coords: [30.72, 79.60], details: "<b>Flora:</b> Endemic alpine flowers.<br><b>Fauna:</b> Asian black bear (VU)." },
+    { name: "Kalesar", isNP: true, isTR: false, isWLS: false, coords: [30.35, 77.58], details: "<b>Fauna:</b> Siberian crane (CR) Bird." },
+    { name: "Sultanpur", isNP: true, isTR: false, isWLS: false, coords: [28.46, 76.89], details: "<b>State:</b> Haryana Bird Sanctuary." },
+    { name: "Dudhwa", isNP: true, isTR: true, isWLS: false, coords: [28.48, 80.60], details: "<b>Rivers:</b> Between Sharda and Ghagra river.<br><b>Includes:</b> Kishanpur and Katarniaghat WLS." },
+    { name: "Valmiki", isNP: true, isTR: true, isWLS: false, coords: [27.35, 84.15], details: "<b>Rivers:</b> Gandak and Burhi gandak river." },
+    { name: "Khirganga", isNP: true, isTR: false, isWLS: false, coords: [31.98, 77.50], details: "<b>Location:</b> Parvati Valley.<br><b>Famous for:</b> Hot Springs.<br><b>Fauna:</b> Blue Sheep." },
+    { name: "Inderkila", isNP: true, isTR: false, isWLS: false, coords: [32.22, 77.20], details: "<b>Location:</b> Kullu District.<br><b>Fauna:</b> Himalayan Monal, Brown Bear." },
+
+    // --- NEW LOCATIONS ---
+    { name: "Nandadevi", isNP: true, isTR: false, isWLS: false, coords: [30.41, 79.90], details: "<b>Status:</b> UNESCO World Heritage site.<br><b>Fauna:</b> Snow Leopard, Himalayan Musk Deer.<br><b>Peak:</b> Nanda Devi Peak." },
+    { name: "Govind pashu vihar", isNP: true, isTR: false, isWLS: false, coords: [31.15, 78.30], details: "<b>Location:</b> Uttarkashi district.<br><b>Project:</b> Snow Leopard Project started here.<br><b>River:</b> Tons River." },
+    { name: "Gangotri", isNP: true, isTR: false, isWLS: false, coords: [31.00, 79.00], details: "<b>Origin:</b> Gaumukh Glacier (Ganges origin).<br><b>Fauna:</b> Ibex, Snow Leopard.<br><b>Type:</b> High altitude coniferous forest." },
+    { name: "Ranipur", isNP: false, isTR: true, isWLS: false, coords: [25.10, 81.00], details: "<b>Location:</b> UP (Chitrakoot district).<br><b>Status:</b> 53rd Tiger Reserve of India.<br><b>Flora:</b> Dry deciduous forest." },
+    { name: "Amanagarh", isNP: false, isTR: true, isWLS: false, coords: [29.60, 78.70], details: "<b>State:</b> UP (Bijnor).<br><b>Link:</b> Buffer zone to Corbett TR.<br><b>Fauna:</b> Bengal Tiger, Asian Elephant." },
+    { name: "Pilibhit", isNP: false, isTR: true, isWLS: false, coords: [28.60, 80.10], details: "<b>Award:</b> TX2 Award for doubling tiger population.<br><b>Rivers:</b> Sharda and Ghagra rivers nearby." },
+
+    // --- JHARKHAND ---
+    { name: "Betla", isNP: true, isTR: false, isWLS: false, coords: [23.88, 84.19], details: "<b>Plateau:</b> Chota Nagpur Plateau.<br><b>River:</b> North Koel river.<br><b>Fauna:</b> Sloth bear, Elephant." },
+    { name: "Palamu", isNP: false, isTR: true, isWLS: false, coords: [23.85, 84.10], details: "<b>History:</b> One of the first 9 Tiger Reserves (1973).<br><b>Census:</b> World's first tiger census (1932) took place here." },
+
+    // --- RAJASTHAN ---
+    { name: "Sariska", isNP: true, isTR: true, isWLS: false, coords: [27.32, 76.43], details: "<b>Hills:</b> Aravalli Hills.<br><b>Feature:</b> First TR in the world to successfully relocate tigers." },
+    { name: "Keoladeo", isNP: true, isTR: false, isWLS: false, coords: [27.16, 77.52], details: "<b>AKA:</b> Bharatpur Bird Sanctuary.<br><b>Fauna:</b> Siberian crane (CR), Sarus Crane (VU).<br><b>Status:</b> UNESCO World Heritage Site." },
+    { name: "Ranthambore", isNP: true, isTR: true, isWLS: false, coords: [26.01, 76.50], details: "<b>Includes:</b> Sawai madhavpur Sanctuary.<br><b>Rivers:</b> Banas (North) and Chambal (South).<br><b>Fauna:</b> Bengal Tiger." },
+    { name: "Mukundra Hills", isNP: true, isTR: true, isWLS: false, coords: [24.81, 75.87], details: "<b>Includes:</b> Darrah NP.<br><b>River:</b> Chambal river.<br><b>Landscape:</b> Formed by three WLS (Darrah, Jawahar Sagar, Chambal)." },
+    { name: "Desert", isNP: true, isTR: false, isWLS: false, coords: [26.79, 70.89], details: "<b>Fauna:</b> Great Indian Bustard (CR).<br><b>Forest:</b> Oran (Community Forest/Sacred Grove).<br><b>Feature:</b> Akal Wood Fossil Park." },
+    { name: "Ramgarh Vishdhari", isNP: false, isTR: true, isWLS: false, coords: [25.55, 75.76], details: "<b>Role:</b> Critical link between Ranthambore TR and Mukundra Hills TR.<br><b>Status:</b> 52nd Tiger Reserve of India." },
+    { name: "Dholpur Karauli", isNP: false, isTR: true, isWLS: false, coords: [26.40, 77.30], details: "<b>Status:</b> Rajasthan's 5th Tiger Reserve.<br><b>Adjacent:</b> National Chambal Gharial Sanctuary." },
+    { name: "Tal Chhapar", isNP: false, isTR: false, isWLS: true, coords: [27.79, 74.43], details: "<b>Fauna:</b> Blackbuck (LC).<br><b>Location:</b> Churu district (Shekhawati region).<br><b>Landscape:</b> Special 'Mothiya' grass found here." },
+
+    // --- MISCELLANEOUS SPECIAL POINTS ---
+    { name: "Honey Badger", isMisc: true, coords: [30.20, 79.00], details: "<b>AKA:</b> Ratel (Weasel family).<br><b>Diet:</b> Omnivorous.<br><b>Range:</b> Native to Asia and Africa; found in Uttarakhand." },
+    { name: "Askot Musk deer sanctuary", isMisc: true, coords: [29.75, 80.30], details: "<b>Target:</b> Protection of Musk Deer (EN).<br><b>River:</b> Kali river valley.<br><b>Peak:</b> Panchachuli peaks visible." },
+    { name: "Ganges River Dolphin", isMisc: true, coords: [25.60, 85.10], details: "<b>Research:</b> National Dolphin Research Centre (NDRC), Patna.<br><b>Tech:</b> Echolocation (Sonar).<br><b>Others using Sonar:</b> Bats, Whales, Shrew, Oilbird, Swiftlet." },
+
+
+    // --- ARUNACHAL PRADESH ---
+    { name: "Mouling", isNP: true, isTR: false, isWLS: false, coords: [28.50, 94.80], details: "<b>River:</b> Siang River.<br><b>Fauna:</b> Red Panda (EN), Takin (EN) Cow-Goat." },
+    { name: "Namdapha", isNP: true, isTR: true, isWLS: false, coords: [27.48, 96.38], details: "<b>Fauna:</b> Namdapha flying squirrel (CR), Clouded Leopard (VU)." },
+    { name: "Pakke", isNP: false, isTR: true, isWLS: false, coords: [27.15, 92.83], details: "<b>Also known as:</b> Pakhui TR.<br><b>State:</b> Arunachal Pradesh." },
+    { name: "Kamlang", isNP: false, isTR: true, isWLS: false, coords: [27.81, 96.34], details: "<b>State:</b> Arunachal Pradesh (Lohit district)." },
+    { name: "Eaglenest", isNP: false, isTR: false, isWLS: true, coords: [27.05, 92.40], details: "<b>Includes:</b> Sessa orchid sanctuary.<br><b>River:</b> Kameng river.<br><b>Bird:</b> Bugun Liocichla (CR)." },
+
+    // --- NAGALAND ---
+    { name: "Intanki", isNP: true, isTR: false, isWLS: false, coords: [25.54, 93.51], details: "<b>Fauna:</b> Hoolock Gibbon (EN) - Ape without tail." },
+
+    // --- MANIPUR ---
+    { name: "Keibul Lamjao", isNP: true, isTR: false, isWLS: false, coords: [24.53, 93.85], details: "<b>Water:</b> Loktak lake.<br><b>Fauna:</b> Dancing deer (Sangoi) (EN).<br><b>Feature:</b> Only floating National Park (Phumdis)." },
+    { name: "Sirohi", isNP: true, isTR: false, isWLS: false, coords: [25.10, 94.45], details: "<b>Flora:</b> Famous for Shirui Lily." },
+
+    // --- MIZORAM ---
+    { name: "Dampa", isNP: false, isTR: true, isWLS: false, coords: [23.71, 92.35], details: "<b>State:</b> Mizoram." },
+    { name: "Murlen", isNP: true, isTR: false, isWLS: false, coords: [23.63, 93.30], details: "<b>River:</b> Tuipui river.<br><b>State:</b> Mizoram." },
+    { name: "Phawngpui", isNP: true, isTR: false, isWLS: false, coords: [22.66, 93.04], details: "<b>Fauna:</b> Mrs. Hume pheasant (NT), Blyth's tragopan (VU)." },
+
+    // --- TRIPURA ---
+    { name: "Rajbari", isNP: true, isTR: false, isWLS: false, coords: [23.41, 91.29], details: "<b>State:</b> Tripura." },
+    { name: "Gumti", isNP: false, isTR: false, isWLS: true, coords: [23.36, 91.80], details: "<b>State:</b> Tripura." },
+    { name: "Clouded Leopard", isNP: true, isTR: false, isWLS: false, coords: [23.65, 91.31], details: "<b>Location:</b> Sipahijola WLS area, Tripura." },
+
+    // --- MEGHALAYA ---
+    { name: "Nokrek", isNP: true, isTR: false, isWLS: false, coords: [25.48, 90.41], details: "<b>Hills:</b> Garo hills.<br><b>River:</b> Simsang river.<br><b>Fauna:</b> Red panda (EN)." },
+    { name: "Balpakram", isNP: true, isTR: false, isWLS: false, coords: [25.21, 90.75], details: "<b>River:</b> Ganeshwari River.<br><b>Fauna:</b> Asian golden cat (NT)." },
+
+    // --- ASSAM ---
+    { name: "Raimona", isNP: true, isTR: false, isWLS: false, coords: [26.69, 89.92], details: "<b>Rivers:</b> Sankosh and Saralbhanga river.<br><b>Fauna:</b> Golden langur (EN)." },
+    { name: "Manas", isNP: true, isTR: true, isWLS: false, coords: [26.73, 91.01], details: "<b>Rivers:</b> Manas river.<br><b>Fauna:</b> Bengal Florican (CR), Gee's Golden Langur (EN), Assam roofed turtle (EN), Pygmy Hog (CR)." },
+    { name: "Orang", isNP: true, isTR: true, isWLS: false, coords: [26.54, 92.32], details: "<b>AKA:</b> Mini Kaziranga.<br><b>River:</b> Brahmaputra (North bank)." },
+    { name: "Nameri", isNP: true, isTR: true, isWLS: false, coords: [26.93, 92.83], details: "<b>Link:</b> Near Pakhui WLS.<br><b>Bird:</b> Ibisbill (LC)." },
+    { name: "Kaziranga", isNP: true, isTR: true, isWLS: false, coords: [26.58, 93.17], details: "<b>River:</b> Brahmaputra.<br><b>Fauna:</b> Wild Buffalo (EN), Indian Rhinoceros (VU), Gaur (VU)." },
+    { name: "Dibru Saikhowa", isNP: true, isTR: false, isWLS: false, coords: [27.67, 95.35], details: "<b>State:</b> Assam." },
+    { name: "Dihing Patkai", isNP: true, isTR: false, isWLS: false, coords: [27.31, 95.43], details: "<b>Fauna:</b> White winged Duck (EN).<br><b>Feature:</b> Jeypore Rainforest." },
+    { name: "Pobitora", isNP: false, isTR: false, isWLS: true, coords: [26.24, 92.05], details: "<b>Fauna:</b> One horned Rhino (VU).<br><b>AKA:</b> Mini Kaziranga." },
+    { name: "Bura Chapori", isNP: false, isTR: false, isWLS: true, coords: [26.65, 92.74], details: "<b>Bird:</b> Bengal Florican (CR)." },
+
+    // --- GUJARAT ---
+    { name: "Gir", isNP: true, isTR: false, isWLS: false, coords: [21.12, 70.82], details: "<b>Water:</b> Kamleshwar Dam on Hiran River.<br><b>River:</b> Setrunji River.<br><b>Fauna:</b> Asiatic Lions (VU).<br><b>Nearby:</b> Paniya and Mitiyala WLS." },
+    { name: "Marine", isNP: true, isTR: false, isWLS: false, coords: [22.50, 69.95], details: "<b>Features:</b> First Marine NP in India.<br><b>Points:</b> Coral reefs and Pirotan Island." },
+    { name: "Velavdar", isNP: true, isTR: false, isWLS: false, coords: [21.92, 72.03], details: "<b>AKA:</b> Blackbuck NP, Bhavnagar.<br><b>Fauna:</b> Blackbuck (LC), MacQueen's Bustard (VU)." },
+    { name: "Vansda", isNP: true, isTR: false, isWLS: false, coords: [20.98, 73.48], details: "<b>River:</b> Ambika River.<br><b>Landscape:</b> Dense moist deciduous forest." },
+    { name: "Banni Grassland", isMisc: true, coords: [23.70, 69.45], details: "<b>Status:</b> Largest Grassland in Asia.<br><b>Fauna:</b> Indian Wild Ass (Khur/Ghudkhur).<br><b>Community:</b> Maldhari.<br><b>Includes:</b> Chhari Dhand Reserve." },
+
+    // --- ODISHA ---
+    { name: "Bhitarkanika", isNP: true, isTR: false, isWLS: false, coords: [20.73, 86.87], details: "<b>Coast:</b> Gahirmatha Beach (Olive Ridley Sea Turtles).<br><b>Rivers:</b> Brahmani, Baitarani, Dhamra, Pathsala." },
+    { name: "Similipal", isNP: true, isTR: true, isWLS: false, coords: [21.93, 86.35], details: "<b>Fauna:</b> Melanistic Tiger (Black tigers).<br><b>Includes:</b> Hadgarh and Kuldiha WLS." },
+    { name: "Satkosia", isNP: false, isTR: true, isWLS: false, coords: [20.58, 84.83], details: "<b>River:</b> Mahanadi River gorge.<br><b>Landscape:</b> Transition zone between Eastern Ghats & Deccan Plateau." },
+
+    // --- MAHARASHTRA ---
+    { name: "Sanjay Gandhi", isNP: true, isTR: false, isWLS: false, coords: [19.22, 72.91], details: "<b>Location:</b> Mumbai.<br><b>Feature:</b> Kanheri Caves are located inside." },
+    { name: "Chandoli", isNP: true, isTR: false, isWLS: false, coords: [17.13, 73.85], details: "<b>River:</b> Warna River.<br><b>Includes:</b> Radhanagari and Koyna WLS.<br><b>TR:</b> Part of Sahyadri TR." },
+    { name: "Tadoba Andhari", isNP: true, isTR: true, isWLS: false, coords: [20.21, 79.30], details: "<b>History:</b> Oldest NP of Maharashtra.<br><b>River:</b> Andhari River.<br><b>Ranges:</b> Moharli and Kolsa." },
+    { name: "Navegaon-Nagzira", isNP: true, isTR: true, isWLS: false, coords: [21.05, 80.05], details: "<b>Landscape:</b> Important tiger corridor in Gondia district." },
+    { name: "Pench", isNP: true, isTR: true, isWLS: false, coords: [21.48, 79.17], details: "<b>River:</b> Pench River.<br><b>Feature:</b> Shared between Maharashtra and Madhya Pradesh." },
+    { name: "Gugamal", isNP: true, isTR: false, isWLS: false, coords: [21.47, 77.10], details: "<b>TR:</b> Part of Melghat Tiger Reserve.<br><b>Hills:</b> Gawilgarh Hills." },
+    { name: "Melghat", isNP: false, isTR: true, isWLS: false, coords: [21.45, 77.15], details: "<b>River:</b> Tapti river flows along border.<br><b>Fauna:</b> Forest Owlet (CR)." },
+    { name: "Sahyadri", isNP: false, isTR: true, isWLS: false, coords: [17.20, 73.70], details: "<b>Location:</b> Western Ghats, Maharashtra." },
+    { name: "Bor", isNP: false, isTR: true, isWLS: false, coords: [21.03, 78.68], details: "<b>Feature:</b> Smallest Tiger Reserve in India by area." },
+
+    // --- WEST BENGAL ---
+    { name: "Singalila", isNP: true, isTR: false, isWLS: false, coords: [27.03, 88.08], details: "<b>Location:</b> Darjeeling.<br><b>Feature:</b> Highest point in WB (Sandakphu) nearby." },
+    { name: "Neora Valley", isNP: true, isTR: false, isWLS: false, coords: [27.08, 88.70], details: "<b>River:</b> Neora River.<br><b>Fauna:</b> Red Panda habitat." },
+    { name: "Gorumara", isNP: true, isTR: false, isWLS: false, coords: [26.75, 88.79], details: "<b>River:</b> Jaldhaka and Murti Rivers.<br><b>Fauna:</b> Indian Rhinoceros." },
+    { name: "Jaldapara", isNP: true, isTR: false, isWLS: false, coords: [26.69, 89.33], details: "<b>River:</b> Torsa and Kaliani Rivers.<br><b>Fauna:</b> Bengal Florican (CR)." },
+    { name: "Buxa", isNP: true, isTR: true, isWLS: false, coords: [26.65, 89.65], details: "<b>Rivers:</b> Raidak and Jayanti Rivers.<br><b>Border:</b> Borders Bhutan's Phibsoo WLS." },
+    { name: "Sundarban", isNP: true, isTR: true, isWLS: false, coords: [22.13, 88.90], details: "<b>Feature:</b> Largest Mangrove forest.<br><b>Fauna:</b> Royal Bengal Tiger." },
+
+    // --- SIKKIM ---
+    { name: "Kangchenjunga", isNP: true, isTR: false, isWLS: false, coords: [27.60, 88.18], details: "<b>Status:</b> India's first Mixed World Heritage Site.<br><b>Fauna:</b> Asian wild dog (EN)." },
+
+    // --- CHHATTISGARH ---
+    { name: "Guru Ghasidas", isNP: true, isTR: true, isWLS: false, coords: [23.53, 82.35], details: "<b>TR:</b> Includes Tamor Pingla.<br><b>Link:</b> Connects Palamu (JH) and Bandhavgarh (MP)." },
+    { name: "Indravati", isNP: true, isTR: true, isWLS: false, coords: [18.90, 80.35], details: "<b>AKA:</b> Kutru NP.<br><b>River:</b> Indravati River.<br><b>Fauna:</b> Wild Water Buffalo (EN), Nilgai (LC)." },
+    { name: "Kanger Valley", isNP: true, isTR: false, isWLS: false, coords: [18.82, 82.02], details: "<b>River:</b> Kolab River.<br><b>Feature:</b> Famous for limestone caves (Kotumsar)." },
+    { name: "Achanakmar", isNP: false, isTR: true, isWLS: false, coords: [22.45, 81.75], details: "<b>Status:</b> Part of Achanakmar-Amarkantak Biosphere Reserve." },
+    { name: "Udanti-Sitanadi", isNP: false, isTR: true, isWLS: false, coords: [20.25, 82.00], details: "<b>Fauna:</b> Wild Water Buffalo population." },
+
+    // --- TELANGANA ---
+    { name: "Kasu Brahmananda Reddy", isNP: true, isTR: false, isWLS: false, coords: [17.42, 78.42], details: "<b>Location:</b> Jubilee Hills, Hyderabad." },
+    { name: "Mrugavani", isNP: true, isTR: false, isWLS: false, coords: [17.35, 78.34], details: "<b>Fauna:</b> Cheetal, Sambar, Civet cat." },
+    { name: "Mahaveer Harina Vanasthali", isNP: true, isTR: false, isWLS: false, coords: [17.33, 78.58], details: "<b>Fauna:</b> Blackbucks habitat." },
+    { name: "Kawal", isNP: false, isTR: true, isWLS: false, coords: [19.10, 78.75], details: "<b>River:</b> Godavari river catchment." },
+    { name: "Amrabad", isNP: false, isTR: true, isWLS: false, coords: [16.35, 78.80], details: "<b>Feature:</b> Located in Nallamala Hills." },
+
+    // --- ANDHRA PRADESH ---
+    { name: "Papikonda", isNP: true, isTR: false, isWLS: false, coords: [17.48, 81.50], details: "<b>Fauna:</b> Oriental Darter (NT), Black-bellied Tern (EN), Pallid Harrier (NT), Jerdon's Nightjar (LC), Great Stone Curlew (NT)." },
+    { name: "Rajiv Gandhi", isNP: true, isTR: false, isWLS: false, coords: [14.75, 78.82], details: "<b>Location:</b> Rameswaram, Kadapa district." },
+    { name: "Sri Venkateswara", isNP: true, isTR: false, isWLS: false, coords: [13.75, 79.35], details: "<b>Hills:</b> Seshachalam and Tirumala.<br><b>Fauna:</b> White-backed Vulture (CR), Yellow-throated Bulbul (VU)." },
+    { name: "Nagarjunasagar Srisailam", isNP: false, isTR: true, isWLS: false, coords: [16.20, 79.00], details: "<b>Status:</b> Largest Tiger Reserve in India by area." },
+
+    // --- GOA ---
+    { name: "Mollem", isNP: true, isTR: false, isWLS: false, coords: [15.35, 74.23], details: "<b>Feature:</b> Includes Bhagwan Mahaveer Sanctuary and Dudhsagar falls." },
+    { name: "Madei", isNP: false, isTR: false, isWLS: true, coords: [15.52, 74.15], details: "<b>River:</b> Mahadayi River origin." },
+
+    // --- KARNATAKA ---
+    { name: "Anshi", isNP: true, isTR: true, isWLS: false, coords: [15.00, 74.35], details: "<b>AKA:</b> Kali TR.<br><b>River:</b> Kali River.<br><b>Includes:</b> Dandeli WLS." },
+    { name: "Kudremukh", isNP: true, isTR: false, isWLS: false, coords: [13.22, 75.25], details: "<b>Link:</b> Near Bhadra TR.<br><b>Fauna:</b> Lion-tailed Macaque (EN)." },
+    { name: "Nagarhole", isNP: true, isTR: true, isWLS: false, coords: [12.11, 76.16], details: "<b>River:</b> Laxmantirtha and Kabini.<br><b>Hills:</b> Brahmagiri Hills." },
+    { name: "Bandipur", isNP: true, isTR: true, isWLS: false, coords: [11.66, 76.62], details: "<b>Status:</b> Part of Nilgiri Biosphere Reserve." },
+    { name: "Bannerghatta", isNP: true, isTR: false, isWLS: false, coords: [12.78, 77.58], details: "<b>Feature:</b> Country's first Butterfly Park." },
+    { name: "Chincholi", isNP: false, isTR: false, isWLS: true, coords: [17.45, 77.42], details: "<b>Status:</b> First dry land WLS in South India." },
+
+
+    // --- MISC / SPECIAL ---
+    { name: "Hollongapar Gibbon Sanctuary", isMisc: true, coords: [26.67, 94.36], details: "<b>Fauna:</b> Western hoolock gibbon (EN), Bengal Slow Iris (EN).<br><b>CITES:</b> Appendix II." },
+    { name: "Agarwood", isMisc: true, coords: [26.15, 93.95], details: "<b>Status:</b> Evergreen tree, native to NE India.<br><b>Trade:</b> Exported largely by India." },
+    { name: "Honey Badger", isMisc: true, coords: [30.20, 79.00], details: "<b>AKA:</b> Ratel.<br><b>Range:</b> Uttarakhand." },
+    { name: "Ganges River Dolphin", isMisc: true, coords: [25.60, 85.10], details: "<b>Centre:</b> Patna.<br><b>Tech:</b> Echolocation (Sonar)." },
+
+    // --- KARNATAKA ---
+    { name: "Biligiri Ranganatha Swamy Temple", isNP: false, isTR: true, isWLS: false, coords: [11.99, 77.13], details: "<b>AKA:</b> BRT Tiger Reserve.<br><b>Link:</b> Bridge between Eastern and Western Ghats.<br><b>Flora:</b> Presence of both deciduous and evergreen forests." },
+
+    // --- KERALA ---
+    { name: "Silent Valley", isNP: true, isTR: false, isWLS: false, coords: [11.13, 76.42], details: "<b>Status:</b> Core of Nilgiri Biosphere Reserve.<br><b>Fauna:</b> Indian Pangolin (EN), Lion-tailed Macaque (EN).<br><b>Feature:</b> No road access inside the park." },
+    { name: "Eravikulam", isNP: true, isTR: false, isWLS: false, coords: [10.20, 77.08], details: "<b>Fauna:</b> Nilgiri Tahr (EN), Nilgiri Marten (VU), Asian small-clawed otter (VU).<br><b>Amphibian:</b> Raorchestes Resplendens (CR) Frog.<br><b>Peak:</b> Home to Anamudi Peak." },
+    { name: "Anamudi Shola", isNP: true, isTR: false, isWLS: false, coords: [10.16, 77.18], details: "<b>Climate:</b> High altitude moist tropical evergreen.<br><b>Status:</b> UNESCO World Heritage Site.<br><b>State:</b> Kerala (Idukki district)." },
+    { name: "Pambadum Shola", isNP: true, isTR: false, isWLS: false, coords: [10.14, 77.25], details: "<b>Size:</b> Smallest National Park in Kerala.<br><b>Meaning:</b> Name means 'The place where snakes dance'.<br><b>Fauna:</b> Nilgiri Marten habitat." },
+    { name: "Mathikettan Shola", isNP: true, isTR: false, isWLS: false, coords: [10.00, 77.20], details: "<b>Meaning:</b> 'Mind Confuser' in Tamil, as people often lose their way.<br><b>Role:</b> Important elephant corridor.<br><b>State:</b> Kerala." },
+    { name: "Periyar", isNP: true, isTR: true, isWLS: false, coords: [9.46, 77.17], details: "<b>Location:</b> Cardamom Hills and Pandalam Hills.<br><b>Fauna:</b> Salim Ali Fruit Bat (EN).<br><b>River:</b> Pamba and Mullayar Rivers." },
+    { name: "Parambikulam", isNP: false, isTR: true, isWLS: false, coords: [10.38, 76.77], details: "<b>Tree:</b> Kannimara Teak (One of the world's oldest/largest teak trees).<br><b>State:</b> Kerala (Palakkad district).<br><b>Tribe:</b> Kadar, Malasar, Muduvar." },
+
+    // --- MADHYA PRADESH ---
+    { name: "Dinosaur", isNP: true, isTR: false, isWLS: false, coords: [22.59, 75.31], details: "<b>Location:</b> Dhar district, MP.<br><b>Fossils:</b> 65-million-year-old Dinosaur eggs found here.<br><b>State:</b> Madhya Pradesh." },
+    { name: "Omkareshwar", isNP: true, isTR: false, isWLS: false, coords: [22.24, 76.15], details: "<b>River:</b> Narmada River.<br><b>Location:</b> Khandwa District.<br><b>Flora:</b> Dry deciduous scrub forest." },
+    { name: "Satpura", isNP: true, isTR: false, isWLS: false, coords: [22.48, 78.17], details: "<b>River:</b> Tawa River and Denwa River.<br><b>Landscape:</b> Rugged terrain with deep ravines and sandstone peaks.<br><b>State:</b> Madhya Pradesh." },
+    { name: "Kanha", isNP: true, isTR: true, isWLS: false, coords: [22.33, 80.61], details: "<b>Fauna:</b> Barasingha (VU) - Swamp Deer (State animal of MP).<br><b>Feature:</b> Inspiration for Rudyard Kipling's Jungle Book." },
+    { name: "Mandla Fossil", isNP: true, isTR: false, isWLS: false, coords: [23.11, 80.62], details: "<b>Location:</b> Ghughua area.<br><b>Fossils:</b> Plant and leaf fossils dating back 40-150 million years.<br><b>State:</b> Madhya Pradesh." },
+    { name: "Sanjay", isNP: true, isTR: true, isWLS: false, coords: [24.11, 81.93], details: "<b>Shared:</b> Shared between MP and Chhattisgarh (Guru Ghasidas).<br><b>Fauna:</b> Tiger, Leopard, Sloth Bear." },
+    { name: "Bandhavgarh", isNP: true, isTR: true, isWLS: false, coords: [23.72, 81.02], details: "<b>History:</b> High density of tigers.<br><b>Famous:</b> Known for White Tigers (Mohan was the first captured here)." },
+    { name: "Panna", isNP: true, isTR: true, isWLS: false, coords: [24.62, 79.94], details: "<b>River:</b> Ken River flows through the park.<br><b>Feature:</b> Known for diamond mines nearby.<br><b>Status:</b> UNESCO Biosphere Reserve." },
+    { name: "Van Vihar", isNP: true, isTR: false, isWLS: false, coords: [23.23, 77.37], details: "<b>Location:</b> Bhopal city, beside Upper Lake.<br><b>Type:</b> Modern Zoological Park/Rescue Centre.<br><b>State:</b> Madhya Pradesh." },
+    { name: "Madhav", isNP: true, isTR: true, isWLS: false, coords: [25.43, 77.65], details: "<b>Location:</b> Shivpuri district.<br><b>Heritage:</b> Hunting grounds of Mughal Emperors and Maharajas of Gwalior." },
+    { name: "Kuno", isNP: true, isTR: false, isWLS: false, coords: [25.61, 77.17], details: "<b>River:</b> Kuno River.<br><b>Status:</b> Site for Cheetah Reintroduction project in India." },
+    { name: "Veerangana Rani Durgavati", isNP: false, isTR: true, isWLS: false, coords: [23.51, 79.74], details: "<b>Status:</b> MP's 7th Tiger Reserve.<br><b>Location:</b> Sagar, Damoh, and Narsinghpur districts." },
+    { name: "Ratapani", isNP: false, isTR: true, isWLS: false, coords: [22.95, 77.83], details: "<b>Location:</b> Raisen district.<br><b>Heritage:</b> Includes the Bhimbetka Rock Shelters (World Heritage Site)." },
+    { name: "Bori-Satpura", isNP: false, isTR: true, isWLS: false, coords: [22.40, 78.20], details: "<b>Forest:</b> Home to the oldest teak forest in India.<br><b>Role:</b> Part of the Satpura Tiger Reserve landscape." },
+    { name: "National Chambal Sanctuary", isMisc: true, coords: [26.49, 78.20], details: "<b>Fauna:</b> Gharial (CR), Red-crowned roofed turtle (CR), Gangetic Dolphin.<br><b>River:</b> Chambal River (Tri-junction of MP, UP, Rajasthan)." },
+    { name: "Gandhisagar", isNP: false, isTR: false, isWLS: true, coords: [24.44, 75.40], details: "<b>Fauna:</b> Mugger Crocodile (VU), Chinkara.<br><b>River:</b> Chambal river flows through." },
+
+    // --- TAMIL NADU ---
+    { name: "Guindy", isNP: true, isTR: false, isWLS: false, coords: [13.00, 80.23], details: "<b>Location:</b> Inside Chennai city.<br><b>Fauna:</b> Indian Star Tortoise (VU), Blackbuck.<br><b>Includes:</b> Guindy Snake Park." },
+    { name: "Mudumalai", isNP: true, isTR: true, isWLS: false, coords: [11.58, 76.56], details: "<b>Fauna:</b> White-rumped Vulture (CR), Indian Vulture (CR).<br><b>Status:</b> Part of Nilgiri Biosphere Reserve." },
+    { name: "Mukurthi", isNP: true, isTR: false, isWLS: false, coords: [11.30, 76.60], details: "<b>Status:</b> Part of Nilgiri Biosphere Reserve.<br><b>Fauna:</b> Nilgiri Tahr (Flagship species).<br><b>Hills:</b> Nilgiri Hills." },
+    { name: "Anamalai", isNP: true, isTR: true, isWLS: false, coords: [10.43, 76.99], details: "<b>AKA:</b> Indira Gandhi WLS & NP.<br><b>Hills:</b> Anaimalai Hills.<br><b>State:</b> Tamil Nadu (Pollachi)." },
+    { name: "Gulf of Mannar Marine", isNP: true, isTR: false, isWLS: false, coords: [9.15, 78.89], details: "<b>Fauna:</b> Dugong (Sea Cow) (VU) - Herbivore.<br><b>Nearby:</b> Tuticorin Port.<br><b>Status:</b> First Marine Biosphere in SE Asia." },
+    { name: "Sathyamangalam", isNP: false, isTR: true, isWLS: false, coords: [11.66, 77.24], details: "<b>Award:</b> TX2 Award for doubling tiger population.<br><b>Role:</b> Critical link between Eastern and Western Ghats." },
+    { name: "Srivilliputhur-Megamalai", isNP: false, isTR: true, isWLS: false, coords: [9.67, 77.40], details: "<b>Status:</b> 5th Tiger Reserve of Tamil Nadu.<br><b>Mountains:</b> High Wavy Mountains.<br><b>Role:</b> Buffer to Periyar TR." },
+    { name: "Kalakkad Mundanthurai", isNP: false, isTR: true, isWLS: false, coords: [8.55, 77.30], details: "<b>Mountains:</b> Part of Agasthyamala Biosphere Reserve.<br><b>River:</b> Thamirabarani river origin.<br><b>State:</b> Tamil Nadu." },
+
+    // --- ANDAMAN & NICOBAR ---
+    { name: "Saddle Peak", isNP: true, isTR: false, isWLS: false, coords: [13.15, 93.00], details: "<b>Feature:</b> Highest point in Andaman Islands.<br><b>River:</b> Kalpong river (only river in A&N) flows nearby." },
+    { name: "North Button Island", isNP: true, isTR: false, isWLS: false, coords: [12.31, 93.06], details: "<b>Fauna:</b> Dugong, Water Monitor Lizards.<br><b>Type:</b> Extremely small island NP." },
+    { name: "Middle Button Island", isNP: true, isTR: false, isWLS: false, coords: [12.27, 93.02], details: "<b>Fauna:</b> Spotted Deer, Monitor Lizards.<br><b>Landscape:</b> Deciduous forests surrounded by coral reefs." },
+    { name: "South Button Island", isNP: true, isTR: false, isWLS: false, coords: [12.22, 93.02], details: "<b>Size:</b> Smallest National Park in India.<br><b>Feature:</b> Famous for Scuba diving and coral reefs." },
+    { name: "Rani Jhansi Marine", isNP: true, isTR: false, isWLS: false, coords: [12.00, 93.00], details: "<b>Location:</b> Ritchie's Archipelago.<br><b>Habitat:</b> Mangroves and lagoons.<br><b>State:</b> Andaman Islands." },
+    { name: "Mount Harriet", isNP: true, isTR: false, isWLS: false, coords: [11.72, 92.73], details: "<b>Note:</b> Renamed to Mount Manipur NP.<br><b>Feature:</b> Highest point in South Andaman." },
+    { name: "Mahatma Gandhi Marine", isNP: true, isTR: false, isWLS: false, coords: [11.53, 92.56], details: "<b>AKA:</b> Wandoor NP.<br><b>Feature:</b> Protecting nesting sea turtles and corals." },
+    { name: "Campbell Bay", isNP: true, isTR: false, isWLS: false, coords: [7.00, 93.89], details: "<b>Location:</b> Great Nicobar Island.<br><b>Fauna:</b> Nicobar Megapode, Giant Robber Crab." },
+    { name: "Galathea", isNP: true, isTR: false, isWLS: false, coords: [6.80, 93.85], details: "<b>Fauna:</b> Leatherback Sea Turtle (Largest turtle).<br><b>River:</b> Galathea River flows through." }
+
+];
+
+console.log(locations.length)

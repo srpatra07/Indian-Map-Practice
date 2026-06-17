@@ -18,6 +18,8 @@
             --danger: #e74c3c;
             --accent: #f39c12;
             --misc: #9b59b6;
+            --active: #a040ff;
+            /* Purple for current random target */
             --bg-card: #ffffff;
         }
 
@@ -60,8 +62,9 @@
             color: #fff;
             cursor: pointer;
             font-weight: 600;
-            margin-left: 5px;
+            margin: 5px 2px;
             transition: 0.2s;
+            display: inline-block;
         }
 
         .btn:hover {
@@ -77,10 +80,10 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.6);
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(8px);
+            cursor: pointer;
         }
 
         .modal-content {
@@ -91,6 +94,7 @@
             text-align: center;
             position: relative;
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            cursor: default;
         }
 
         .details-card {
@@ -170,17 +174,31 @@
             cursor: pointer;
         }
 
-        .custom-icon:hover {
-            transform: scale(1.2);
-        }
-
         i.fa-solid {
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        .timer-box {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            border: 2px solid var(--primary);
+            text-align: center;
+            min-width: 100px;
         }
     </style>
 </head>
 
 <body>
+
+    <div class="timer-box animate__animated animate__fadeInDown">
+        <span style="font-size: 14px; color: #666;">Time Elapsed</span><br>
+        <span class="score-val" id="timer">00:00</span>
+    </div>
 
     <div id="map"></div>
 
@@ -190,12 +208,13 @@
             class="score-val" id="total">0</span>
         <div style="margin-top: 10px;">
             <button class="btn" id="resetBtn">Reset</button>
+            <button class="btn" id="randomBtn" style="background:var(--active)">Random Challenge</button>
             <button class="btn" id="showAllBtn" style="background:#636e72">Show All</button>
         </div>
     </div>
 
     <div id="guessModal" class="modal">
-        <div class="modal-content animate__animated animate__zoomIn">
+        <div class="modal-content">
             <h2 id="modalTitle" style="margin-top:0; color:var(--primary)">Identify this area?</h2>
 
             <input class="guess-input" id="guessInput" placeholder="Ex: Namdapha NP (TR)" autocomplete="off" />
@@ -429,18 +448,30 @@
 
         ];
 
+        let seconds = 0;
+        let timerInterval = null;
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            seconds = 0;
+            document.getElementById('timer').textContent = "00:00";
+            timerInterval = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const secs = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('timer').textContent = `${mins}:${secs}`;
+            }, 1000);
+        }
+
         // --- MAP INIT ---
         const map = L.map('map', {
             zoomControl: false,
-            // Physics-based smoothness
-            inertia: true,
-            inertiaDeceleration: 3000,
-            inertiaMaxSpeed: 1500,
-            // Smooth zooming settings
-            zoomSnap: 0.4,    // Allows zooming to fractional levels (smoother)
-            zoomDelta: 1.2,   // Incremental zoom steps
-            wheelPxPerZoomLevel: 120 // Makes scroll-zoom feel less "jumpy"
+            zoomSnap: 1,
+            zoomAnimation: true,
+            markerZoomAnimation: true,
+            fadeAnimation: true
         }).setView([22.9, 80.5], 5);
+
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
         fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/countries/india/india-states.json')
@@ -453,6 +484,8 @@
         let currentLoc = null;
         let currentMarker = null;
         const markers = [];
+        let isSequentialMode = false;
+        let currentActiveMarker = null;
 
         function getCorrectString(loc) {
             if (loc.isMisc) return loc.name;
@@ -483,7 +516,6 @@
             modal.style.display = 'flex';
 
             if (loc.guessed) {
-                // INFO MODE (Post-Guess)
                 document.getElementById('modalTitle').innerText = getCorrectString(loc);
                 input.style.display = 'none';
                 feedback.textContent = loc.wasCorrect ? "✅ GUESSED CORRECTLY" : "❌ GUESSED INCORRECTLY";
@@ -492,7 +524,6 @@
                 revealCard.style.display = 'block';
                 nextBtn.style.display = 'block';
             } else {
-                // GUESS MODE
                 document.getElementById('modalTitle').innerText = "Identify this area?";
                 input.style.display = 'block';
                 input.value = '';
@@ -516,20 +547,33 @@
             revealCard.style.display = 'block';
             nextBtn.style.display = 'block';
 
+            const resultColor = isCorrect ? "var(--success)" : "var(--danger)";
+
             if (isCorrect) {
                 score++;
                 document.getElementById('score').textContent = score;
                 feedback.textContent = "CORRECT!";
                 feedback.style.color = "var(--success)";
-                currentMarker.setIcon(createIcon(currentLoc, "var(--success)"));
             } else {
                 feedback.textContent = `WRONG! It's ${correctAns}`;
                 feedback.style.color = "var(--danger)";
-                currentMarker.setIcon(createIcon(currentLoc, "var(--danger)"));
+            }
+
+            // This line is crucial: it changes the icon from Purple to Green/Red
+            currentMarker.setIcon(createIcon(currentLoc, resultColor));
+
+            const allGuessed = locations.every(loc => loc.guessed === true);
+            if (allGuessed) {
+                clearInterval(timerInterval);
+                // Optional: Add an alert or visual cue that they finished
+                document.getElementById('timer').style.color = "var(--success)";
             }
         }
 
         function initGame() {
+            startTimer(); 
+            isSequentialMode = false;
+            currentActiveMarker = null;
             markers.forEach(m => map.removeLayer(m.marker));
             markers.length = 0;
             score = 0;
@@ -537,15 +581,44 @@
             document.getElementById('total').textContent = locations.length;
 
             locations.forEach(loc => {
-                loc.guessed = false; // Reset state
+                loc.guessed = false;
                 const marker = L.marker(loc.coords, { icon: createIcon(loc) }).addTo(map);
                 marker.on('click', (e) => {
-                    // Prevents the map from reacting to the click (no panning/zooming)
                     L.DomEvent.stopPropagation(e);
                     openModal(loc, marker);
                 });
                 markers.push({ marker, data: loc });
             });
+        }
+
+        function pickNextRandom() {
+            // Uniquely identify markers that have not been guessed yet
+            const available = markers.filter(m => m.data.guessed === false);
+
+            if (available.length === 0) {
+                alert("Challenge Complete! You have identified every site uniquely.");
+                isSequentialMode = false;
+                if (currentActiveMarker) currentActiveMarker.marker.setIcon(createIcon(currentActiveMarker.data));
+                return;
+            }
+
+            // Pick a random one from the remaining unique set
+            const target = available[Math.floor(Math.random() * available.length)];
+
+            // Clean up the previous purple marker if it wasn't guessed
+            if (currentActiveMarker && !currentActiveMarker.data.guessed) {
+                currentActiveMarker.marker.setIcon(createIcon(currentActiveMarker.data));
+            }
+
+            currentActiveMarker = target;
+            // Set the target to Purple (Active)
+            target.marker.setIcon(createIcon(target.data, "var(--active)"));
+
+            map.flyTo(target.data.coords, 8, { animate: true, duration: 1.5 });
+
+            setTimeout(() => {
+                openModal(target.data, target.marker);
+            }, 1700);
         }
 
         const modal = document.getElementById('guessModal');
@@ -556,14 +629,38 @@
         const nextBtn = document.getElementById('nextBtn');
 
         input.addEventListener('keypress', e => { if (e.key === 'Enter') checkGuess(); });
-        nextBtn.addEventListener('click', () => modal.style.display = 'none');
+
+        nextBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+
+            // Only trigger the next random site if:
+            // 1. We are in Sequential Mode
+            // 2. The site we just closed was the one the game actually picked for us
+            if (isSequentialMode && currentLoc === currentActiveMarker?.data) {
+                setTimeout(pickNextRandom, 600);
+            }
+        });
+
         document.getElementById('resetBtn').addEventListener('click', initGame);
+        document.getElementById('randomBtn').addEventListener('click', () => {
+            isSequentialMode = true;
+            pickNextRandom();
+        });
 
         document.getElementById('showAllBtn').addEventListener('click', () => {
             markers.forEach(m => {
                 const tip = L.tooltip({ permanent: true, direction: 'top', className: 'place-label' })
                     .setContent(getCorrectString(m.data)).setLatLng(m.data.coords).addTo(map);
                 setTimeout(() => map.removeLayer(tip), 4000);
+            });
+        });
+
+        const modalElement = document.getElementById('guessModal');
+        ['click', 'touchstart'].forEach(eventType => {
+            modalElement.addEventListener(eventType, function (event) {
+                if (event.target === modalElement) {
+                    modalElement.style.display = "none";
+                }
             });
         });
 
@@ -575,7 +672,8 @@
                 <i class="fa-solid fa-tree" style="color:#2ecc71"></i> NP / NP (TR)<br>
                 <i class="fa-solid fa-shield-halved" style="color:#f1c40f"></i> WLS<br>
                 <i class="fa-solid fa-paw" style="color:#e67e22"></i> TR (Only)<br>
-                <i class="fa-solid fa-star" style="color:var(--misc)"></i> Misc / Special
+                <i class="fa-solid fa-star" style="color:var(--misc)"></i> Misc / Special<br>
+                <i class="fa-solid fa-circle" style="color:var(--active)"></i> Active Target
             `;
             return div;
         };
